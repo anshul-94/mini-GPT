@@ -397,7 +397,7 @@
 
     <aside id="sidebar">
         <div class="app-name">Assistant</div>
-        <button class="new-chat-btn" id="new-chat-btn">
+        <button type="button" class="new-chat-btn" id="new-chat-btn">
             <svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
             New Chat
         </button>
@@ -514,14 +514,22 @@
             // Re-use current active session if it is empty to avoid polluting history with blank chats
             const activeSess = S.sessions.find(s => s.id === S.activeId);
             if (activeSess && activeSess.messages.length === 0 && !activeSess.isLoading) {
+                D.input.value = '';
+                D.input.style.height = 'auto';
                 D.input.focus();
+                D.sendBtn.classList.remove('active');
                 return;
             }
 
             const sess = { id: uid(), title: 'New Chat', messages: [], isLoading: false };
             S.sessions.unshift(sess);
+            
+            // Clear input box state cleanly
+            D.input.value = '';
+            D.input.style.height = 'auto';
+            D.sendBtn.classList.remove('active');
+            
             activateSession(sess.id);
-            renderHistory();
         }
 
         function activateSession(id) {
@@ -537,6 +545,10 @@
                 D.chatContainer.style.display = 'block';
                 renderMessages(sess.messages);
             }
+
+            // Clear input box to avoid stale content leakage across sessions
+            D.input.value = '';
+            D.input.style.height = 'auto';
 
             D.typing.style.display = sess.isLoading ? 'block' : 'none';
             updateInputState(sess.isLoading);

@@ -19,13 +19,17 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1"
 )
 
-# Optimized system prompt
-SYSTEM_PROMPT = """You are Xai, a friendly AI assistant. Strict rules:
-1. Language: Reply ONLY in the user's language (English, Hindi, Hinglish). Never mix.
-2. Tone: Friendly, natural, no cultural assumptions.
-3. Style: Very short (1-2 sentences)."""
+# Optimized system prompt enforcing strict language replication
+SYSTEM_PROMPT = """You are Xai, a friendly AI assistant. Strict language rules:
+1. Detect the dominant language of the last user message.
+2. Reply ONLY in that exact same language:
+   - English input -> Reply in English.
+   - Hindi input -> Reply in Hindi (Devanagari script).
+   - Hinglish input (Hindi written in Roman letters) -> Reply in Hinglish.
+3. NEVER switch languages randomly or mix them.
+4. Keep replies friendly, natural, and very short (1-2 sentences)."""
 
-# Robust prompt template to merge evicted turns into LTM summary
+# Summarize prompt template organizing LTM summary by categories
 SUMMARIZE_PROMPT = """You are a conversation memory manager. Consolidate these new exchanges into the running summary.
 Current Summary:
 {existing_summary}
@@ -33,10 +37,16 @@ Current Summary:
 New exchanges:
 {new_messages}
 
-Output a short, updated summary (max 3 bullets) listing key details (like user name, project stack, goals, and facts). Reply ONLY with the updated summary, nothing else."""
+Output an updated, clean summary strictly structured as follows (omit any category that has no data):
+- Name: (user name if known)
+- Preferences: (user likes, tone, script choices)
+- Projects: (technologies, codebase details, frameworks)
+- Goals: (what the user is building or trying to achieve)
 
-# Concise prompt template to compress large summary
-COMPRESS_PROMPT = """Compress this summary to under 20 words, retaining key user facts:
+Reply ONLY with the updated summary, nothing else."""
+
+# Compress prompt template
+COMPRESS_PROMPT = """Compress this summary, retaining Name, Preferences, Projects, and Goals:
 {summary}
 Reply ONLY with the compressed version."""
 
@@ -75,8 +85,9 @@ def update_ltm_summary(existing_summary: str, evicted_messages: list) -> str:
                 return compress_summary(summary.strip())
     except Exception as e:
         logger.error(f"Failed to update LTM summary: {e}")
+        raise e
         
-    return existing_summary
+    raise RuntimeError("Empty or invalid response from LLM for LTM summarization.")
 
 def compress_summary(summary: str) -> str:
     """Compresses LTM summary further if it exceeds a critical token size threshold."""
@@ -124,17 +135,6 @@ def chat_llm(message: str, session_id: str) -> str:
     # Append the user's message to Short-Term Memory (STM)
     stm.append({"role": "user", "content": message})
     
-    # STM Compaction Logic: Keep only the most recent 6 exchanges (12 messages) directly.
-    # When user sends the 7th message, len(stm) becomes 13 (6 turns + 1 new user message).
-    # We evict the oldest turn (first 2 messages: user + assistant) and merge them into LTM summary.
-    if len(stm) > 12:
-        logger.info(f"Compacting memory for session {session_id}: evicting oldest turn.")
-        evicted = stm[:2]
-        session_memory["stm"] = stm[2:]
-        stm = session_memory["stm"]
-        # Consolidate evicted messages into LTM summary
-        session_memory["summary"] = update_ltm_summary(session_memory["summary"], evicted)
-    
     # Manage active memory limits to prevent leaks
     if len(session_memories) > 1000:
         # Evict oldest 200 sessions if size exceeds 1000
@@ -149,15 +149,16 @@ def chat_llm(message: str, session_id: str) -> str:
     if session_memory["summary"]:
         messages.append({
             "role": "system",
-            "content": f"Context summary of past conversation:\n{session_memory['summary']}"
+            "content": f"User facts summary:\n{session_memory['summary']}"
         })
         
-    messages.extend(stm)
+    # OPTIMIZATION: Only send Last 4 Messages of history + Current User Message (last 5 messages from STM)
+    messages.extend(stm[-5:])
     
     # Get model from environment variable, default to a working free model
     model = os.getenv("OPENROUTER_MODEL", "openai/gpt-oss-20b:free")
     
-    logger.info(f"Sending request for session {session_id} using model '{model}' (STM: {len(stm)} messages, LTM: {len(session_memory['summary'])} chars)")
+    logger.info(f"Sending request for session {session_id} using model '{model}' (STM payload: {len(messages)} msgs, LTM summary size: {len(session_memory['summary'])} chars)")
     
     try:
         response = client.chat.completions.create(
@@ -183,6 +184,20 @@ def chat_llm(message: str, session_id: str) -> str:
         
         # Add assistant reply to STM
         stm.append({"role": "assistant", "content": reply})
+        
+        # Post-turn Compaction Logic:
+        # Keep only the last 4 messages (2 turns of history) in STM.
+        # Evict older messages and merge them into the LTM summary.
+        if len(stm) > 4:
+            evicted = stm[:-4]
+            logger.info(f"Compacting memory for session {session_id}: evicting {len(evicted)} messages.")
+            try:
+                new_summary = update_ltm_summary(session_memory["summary"], evicted)
+                session_memory["summary"] = new_summary
+                session_memory["stm"] = stm[-4:]
+                logger.info(f"Compaction successful. New LTM summary size: {len(new_summary)} chars. STM size: {len(session_memory['stm'])}")
+            except Exception as se:
+                logger.error(f"Compaction postponed due to summarization failure: {se}")
         
         return reply
     except Exception as e:
