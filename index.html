@@ -43,10 +43,11 @@
         /* ============================================================
            BASE LAYOUT  —  full-height flex row
         ============================================================ */
-        html, body {
+        html {
             height: 100%;
-            /* Use dvh where supported so mobile browser chrome doesn't clip */
+            /* dvh tracks the visual viewport (shrinks when mobile keyboard opens) */
             height: 100dvh;
+            overflow: hidden; /* html clips; body itself must NOT be overflow:hidden */
         }
 
         body {
@@ -54,10 +55,15 @@
             background: var(--bg-main);
             color: var(--text-primary);
             display: flex;
-            overflow: hidden;
-            /* Prevent body from ever scrolling horizontally */
+            height: 100%;
+            /* ROOT FIX: Do NOT use overflow:hidden on body.
+               It traps the layout when the mobile keyboard shrinks the viewport,
+               making the input bar disappear below the visible area. */
+            overflow: visible;
             max-width: 100vw;
-            transition: var(--transition);
+            /* Only transition color/background, never geometry — avoids
+               layout-thrashing transitions that break keyboard-open reflows */
+            transition: background 0.2s ease, color 0.2s ease;
         }
 
         /* ============================================================
@@ -73,8 +79,11 @@
             flex-shrink: 0;
             padding: 16px;
             z-index: 200;
-            /* allow sidebar contents to be clipped, never overflow body */
             overflow: hidden;
+            /* ROOT FIX: No transition at base level — mobile uses a specific
+               left-property transition set in the media query. Using
+               transition:all here breaks the keyboard-open reflow on Android. */
+            transition: none;
         }
 
         .app-name {
@@ -199,9 +208,16 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            /* never let the main area overflow the viewport width */
             min-width: 0;
+            /* ROOT FIX: overflow:hidden here clips the input area on Android
+               when the keyboard opens. Use overflow:clip (no scroll) instead,
+               which clips but does not create a scroll container. */
+            overflow: clip;
+            /* Fallback for browsers without overflow:clip */
             overflow: hidden;
+        }
+        @supports (overflow: clip) {
+            #main-content { overflow: clip; }
         }
 
         /* ============================================================
@@ -365,6 +381,10 @@
             /* safe-area bottom for iPhone notch / home indicator */
             padding-bottom: max(16px, env(safe-area-inset-bottom));
             background: linear-gradient(to top, var(--sidebar-bg) 60%, transparent);
+            /* ROOT FIX: explicit stacking context so input is never painted
+               below chat bubbles on Android WebView / Samsung Browser */
+            position: relative;
+            z-index: 10;
         }
 
         .input-container {
@@ -420,19 +440,28 @@
             color: #052e16;
             border: none;
             border-radius: 8px;
-            /* slightly larger for easier tapping */
             width: 36px;
             height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: var(--transition);
+            /* ROOT FIX: Only transition opacity/transform, NEVER pointer-events.
+               Transitioning pointer-events causes Safari/Android to miss taps
+               during the transition animation frame. */
+            transition: opacity 0.2s ease, transform 0.15s ease, background-color 0.2s ease;
             opacity: 0.3;
             pointer-events: none;
+            /* ROOT FIX: touch-action:manipulation eliminates the 300ms
+               tap-delay on Android Chrome and iOS Safari without needing
+               a JS touchstart handler. */
+            touch-action: manipulation;
+            /* Ensure button is always above any overlay within input area */
+            position: relative;
+            z-index: 1;
         }
 
-        #send-btn.active            { opacity: 1; pointer-events: all; }
+        #send-btn.active            { opacity: 1; pointer-events: auto; }
         #send-btn.active:hover      { background-color: var(--accent-hover); transform: scale(1.05); }
 
         /* ============================================================
@@ -511,48 +540,58 @@
             /* Show hamburger */
             .menu-toggle { display: flex; }
 
-            /* Sidebar slides in from left, off-screen by default */
+            /* ROOT FIX: Sidebar is position:fixed so it is removed from
+               the normal flow and does NOT affect #main-content layout.
+               Height uses 100dvh so it stays within the visual viewport
+               even when the keyboard opens. */
             #sidebar {
                 position: fixed;
                 left: -100%;
                 top: 0;
                 bottom: 0;
                 height: 100%;
+                height: 100dvh;
                 width: min(var(--sidebar-width), 80vw);
+                /* Explicit left-property transition only (not 'all') */
                 transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
                 box-shadow: 10px 0 40px rgba(0, 0, 0, 0.6);
-                /* safe-area for left edge on notch devices */
                 padding-left: max(16px, env(safe-area-inset-left));
             }
 
-            #sidebar.open {
-                left: 0;
-            }
+            #sidebar.open { left: 0; }
 
-            /* Show overlay when sidebar is open */
-            #sidebar-overlay {
-                display: block;
-            }
+            /* Overlay visible on mobile */
+            #sidebar-overlay { display: block; }
 
-            /* Push main content down to clear hamburger */
+            /* ROOT FIX: #main-content must NOT have overflow:clip/hidden on mobile.
+               The flex child needs to shrink when the keyboard opens.
+               We clear it here and let #chat-container handle its own scroll. */
             #main-content {
                 padding-top: 64px;
                 width: 100%;
+                overflow: visible;
             }
 
             /* Welcome screen compact */
             .welcome-title { font-size: 24px; }
             .welcome-sub   { font-size: 14px; }
 
-            /* Chat area adjustments */
-            #chat-container { padding: 16px 0; }
+            /* ROOT FIX: #chat-container must be a proper scroll container
+               with -webkit-overflow-scrolling for momentum scroll on iOS.
+               Use flex:1 + min-height:0 so it shrinks when keyboard opens
+               rather than pushing the input bar off screen. */
+            #chat-container {
+                padding: 16px 0;
+                /* min-height:0 allows the flex child to shrink below its content size */
+                min-height: 0;
+                -webkit-overflow-scrolling: touch;
+            }
 
             #messages {
                 padding: 0 12px;
                 gap: 16px;
             }
 
-            /* Bubbles take more width, smaller avatars */
             .message       { gap: 10px; }
             .message .avatar {
                 width: 28px;
@@ -565,7 +604,7 @@
             }
             .bubble { padding: 10px 14px; }
 
-            /* Input area — flush to bottom with safe-area */
+            /* Input area: explicit bottom padding with safe-area */
             #input-area {
                 padding: 10px 12px;
                 padding-bottom: max(10px, env(safe-area-inset-bottom));
@@ -573,7 +612,7 @@
 
             .input-container { margin: 0; }
 
-            textarea { font-size: 16px; /* 16px prevents iOS zoom */ }
+            textarea { font-size: 16px; /* 16px prevents iOS auto-zoom */ }
         }
 
         /* ============================================================
@@ -669,9 +708,17 @@
         const uid = () => Math.random().toString(36).slice(2, 9);
         
         function scrollBottom() {
+            // ROOT FIX: scrollIntoView on the last child is more reliable than
+            // scrollTop = scrollHeight on iOS Safari, especially when the keyboard
+            // is opening simultaneously. Falls back to scrollTop if no children.
             setTimeout(() => {
-                D.chatContainer.scrollTop = D.chatContainer.scrollHeight;
-            }, 50);
+                const lastMsg = D.messages.lastElementChild;
+                if (lastMsg) {
+                    lastMsg.scrollIntoView({ block: 'end', behavior: 'auto' });
+                } else {
+                    D.chatContainer.scrollTop = D.chatContainer.scrollHeight;
+                }
+            }, 60);
         }
 
         const getApiUrl = () => {
@@ -715,12 +762,21 @@
             if (loading) {
                 D.input.disabled = true;
                 D.sendBtn.classList.remove('active');
-                D.sendBtn.style.pointerEvents = 'none';
+                // ROOT FIX: clear any inline style so CSS class fully controls pointer-events.
+                // An inline style.pointerEvents overrides the class and permanently blocks taps.
+                D.sendBtn.style.removeProperty('pointer-events');
             } else {
                 D.input.disabled = false;
-                D.input.focus();
-                D.sendBtn.classList.toggle('active', D.input.value.trim().length > 0);
-                D.sendBtn.style.pointerEvents = D.input.value.trim().length > 0 ? 'all' : 'none';
+                // ROOT FIX: Do NOT call D.input.focus() on mobile.
+                // Programmatic focus() re-opens the keyboard unexpectedly on iOS/Android,
+                // causing layout jumps. Only focus on desktop where it is safe.
+                if (window.innerWidth > 768) {
+                    D.input.focus();
+                }
+                const hasText = D.input.value.trim().length > 0;
+                D.sendBtn.classList.toggle('active', hasText);
+                // ROOT FIX: clear inline style, rely on .active class for pointer-events.
+                D.sendBtn.style.removeProperty('pointer-events');
             }
         }
 
@@ -789,8 +845,10 @@
                 el.textContent = s.title;
                 el.onclick = () => {
                     activateSession(s.id);
+                    // ROOT FIX: call closeSidebar() (not classList.remove directly)
+                    // so the overlay is also dismissed when selecting a history item.
                     if (window.innerWidth <= 768) {
-                        $('sidebar').classList.remove('open');
+                        closeSidebar();
                     }
                 };
                 D.history.appendChild(el);
@@ -924,14 +982,17 @@
             D.input.style.height = 'auto';
             // cap matches CSS max-height: 160px
             D.input.style.height = Math.min(D.input.scrollHeight, 160) + 'px';
-            D.sendBtn.classList.toggle('active', D.input.value.trim().length > 0);
+            const hasText = D.input.value.trim().length > 0;
+            D.sendBtn.classList.toggle('active', hasText);
+            // ROOT FIX: rely on CSS .active class for pointer-events, not inline style.
+            D.sendBtn.style.removeProperty('pointer-events');
         };
 
-        D.input.onkeydown = (e) => { 
-            if (e.key === 'Enter' && !e.shiftKey) { 
-                e.preventDefault(); 
-                sendMessage(); 
-            } 
+        D.input.onkeydown = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
         };
 
         D.sendBtn.onclick = sendMessage;
@@ -942,7 +1003,6 @@
             const sidebar = $('sidebar');
             const overlay = $('sidebar-overlay');
             sidebar.classList.add('open');
-            // Trigger overlay fade-in on next frame
             requestAnimationFrame(() => overlay.classList.add('visible'));
         }
 
@@ -963,26 +1023,51 @@
         // Tapping the overlay closes the sidebar
         $('sidebar-overlay').onclick = () => closeSidebar();
 
-        // Close mobile sidebar when clicking main screen (desktop fallback)
-        document.body.onclick = (e) => {
-            if (window.innerWidth <= 768) {
-                const sidebar = $('sidebar');
-                const toggle = $('menu-toggle');
-                const overlay = $('sidebar-overlay');
-                if (
-                    !sidebar.contains(e.target) &&
-                    e.target !== toggle &&
-                    !toggle.contains(e.target) &&
-                    e.target !== overlay
-                ) {
-                    closeSidebar();
-                }
+        // ROOT FIX: Use a document-level click handler that explicitly excludes
+        // #input-area. The old body.onclick was catching send-button taps before
+        // the button's own onclick could fire on slow Android devices.
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth > 768) return; // desktop: no sidebar to close
+            const sidebar = $('sidebar');
+            const toggle  = $('menu-toggle');
+            const overlay = $('sidebar-overlay');
+            const inputArea = $('input-area');
+            // Do not close sidebar when tapping the input area or its children.
+            if (inputArea && inputArea.contains(e.target)) return;
+            if (
+                !sidebar.contains(e.target) &&
+                e.target !== toggle &&
+                !toggle.contains(e.target) &&
+                e.target !== overlay
+            ) {
+                closeSidebar();
             }
-        };
+        });
+
+        // ROOT FIX: Visual Viewport API for iOS Safari keyboard handling.
+        // window.resize does NOT fire when the iOS keyboard opens.
+        // visualViewport.resize DOES. We use it to scroll the last message
+        // into view so it's not hidden behind the keyboard.
+        if (window.visualViewport) {
+            let lastVH = window.visualViewport.height;
+            window.visualViewport.addEventListener('resize', () => {
+                const newVH = window.visualViewport.height;
+                const keyboardOpened = newVH < lastVH - 50; // threshold: 50px
+                lastVH = newVH;
+                if (keyboardOpened) {
+                    // Keyboard just opened — scroll to bottom so input stays visible
+                    setTimeout(scrollBottom, 100);
+                }
+            });
+        }
 
         /* --- INIT --- */
         newSession();
-        D.input.focus();
+        // ROOT FIX: Only auto-focus on desktop — on mobile this would open
+        // the keyboard immediately on page load, which is bad UX.
+        if (window.innerWidth > 768) {
+            D.input.focus();
+        }
 
     </script>
 </body>
