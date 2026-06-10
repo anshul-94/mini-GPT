@@ -20,14 +20,17 @@ client = OpenAI(
 )
 
 # Optimized system prompt enforcing strict language replication
-SYSTEM_PROMPT = """You are Xai, a friendly AI assistant. Strict language rules:
-1. Detect the dominant language of the last user message.
-2. Reply ONLY in that exact same language:
-   - English input -> Reply in English.
-   - Hindi input -> Reply in Hindi (Devanagari script).
-   - Hinglish input (Hindi written in Roman letters) -> Reply in Hinglish.
-3. NEVER switch languages randomly or mix them.
-4. Keep replies friendly, natural, and very short (1-2 sentences)."""
+SYSTEM_PROMPT = """You are Xai, a friendly AI assistant.
+
+STRICT LANGUAGE DETECTION RULES (follow in this exact order):
+1. First detect the SCRIPT used in the user's last message:
+   - If message uses DEVANAGARI characters (like क, ख, ग, आ, etc.) → reply in Hindi (Devanagari script).
+   - If message uses ROMAN/LATIN alphabet ONLY (a-z, even if words sound Hindi, e.g. "mera naam Anshul hai") → reply in Hinglish (Roman-script Hindi mixed with English). Never switch to Devanagari.
+   - If message is clearly English (words like "my", "name", "is", "what", "how") → reply in English.
+2. When in doubt between English and Hinglish: if the message contains ANY English words or greetings ("hi", "hey", "my name", "baby"), treat it as ENGLISH and reply in English.
+3. NEVER switch from English to Hindi or Hinglish unless the user explicitly writes in Devanagari script.
+4. NEVER randomly change languages mid-conversation.
+5. Keep replies friendly, natural, and concise (1-3 sentences)."""
 
 # Summarize prompt template organizing LTM summary by categories
 SUMMARIZE_PROMPT = """You are a conversation memory manager. Consolidate these new exchanges into the running summary.
@@ -132,9 +135,6 @@ def chat_llm(message: str, session_id: str) -> str:
     session_memory = session_memories[session_id]
     stm = session_memory["stm"]
     
-    # Append the user's message to Short-Term Memory (STM)
-    stm.append({"role": "user", "content": message})
-    
     # Manage active memory limits to prevent leaks
     if len(session_memories) > 1000:
         # Evict oldest 200 sessions if size exceeds 1000
@@ -149,11 +149,17 @@ def chat_llm(message: str, session_id: str) -> str:
     if session_memory["summary"]:
         messages.append({
             "role": "system",
-            "content": f"User facts summary:\n{session_memory['summary']}"
+            "content": f"Long-term memory (user facts):\n{session_memory['summary']}"
         })
-        
-    # OPTIMIZATION: Only send Last 4 Messages of history + Current User Message (last 5 messages from STM)
-    messages.extend(stm[-5:])
+    
+    # BUG 7 FIX: Token Optimization
+    # Send only last 4 messages from STM (prior history) + current user message.
+    # This guarantees a bounded context window regardless of STM state.
+    prior_history = stm[-4:]  # Last 4 messages from history (already in stm)
+    # Append the current user message AFTER building the context (it's the last item in stm)
+    messages.extend(prior_history)
+    # Append the new user message explicitly (it is NOT yet in stm at this point)
+    messages.append({"role": "user", "content": message})
     
     # Get model from environment variable, default to a working free model
     model = os.getenv("OPENROUTER_MODEL", "openai/gpt-oss-20b:free")
@@ -182,7 +188,8 @@ def chat_llm(message: str, session_id: str) -> str:
             
         reply = reply.strip()
         
-        # Add assistant reply to STM
+        # Add the user message and assistant reply to STM now that the call succeeded
+        stm.append({"role": "user", "content": message})
         stm.append({"role": "assistant", "content": reply})
         
         # Post-turn Compaction Logic:
@@ -197,12 +204,14 @@ def chat_llm(message: str, session_id: str) -> str:
                 session_memory["stm"] = stm[-4:]
                 logger.info(f"Compaction successful. New LTM summary size: {len(new_summary)} chars. STM size: {len(session_memory['stm'])}")
             except Exception as se:
-                logger.error(f"Compaction postponed due to summarization failure: {se}")
+                # BUG 2 FIX: Even if LTM summarization fails, still trim STM to prevent unbounded growth.
+                # The evicted messages will be lost but STM stays bounded.
+                logger.error(f"Compaction failed — trimming STM without LTM update: {se}")
+                session_memory["stm"] = stm[-4:]
         
         return reply
     except Exception as e:
         logger.error(f"Error querying OpenRouter API for session {session_id}: {str(e)}")
-        # Remove user message from STM if the call failed, so we don't pollute subsequent requests
-        if stm and stm[-1]["role"] == "user":
-            stm.pop()
+        # BUG 2 FIX: On API failure, the user message was NOT added to STM yet
+        # (we now only append to stm AFTER a successful reply), so no cleanup needed.
         raise e
