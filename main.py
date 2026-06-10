@@ -73,7 +73,6 @@ async def chat_endpoint(data: ChatRequest):
             detail="Rate limit exceeded. Please wait a second before sending another message."
         )
     session_rate_limit[data.session_id] = now
-
     # Intercept raw ping checks
     if data.message.strip().lower() == "ping":
         return {"reply": "pong"}
