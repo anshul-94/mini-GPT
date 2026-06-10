@@ -511,24 +511,30 @@
 
         /* --- SESSIONS --- */
         function newSession() {
-            // Re-use current active session if it is empty to avoid polluting history with blank chats
+            // BUG 1 FIX: Re-use current active session if it is empty.
+            // Guard must also call renderHistory() to fix stale active-highlight (BUG 5).
             const activeSess = S.sessions.find(s => s.id === S.activeId);
             if (activeSess && activeSess.messages.length === 0 && !activeSess.isLoading) {
                 D.input.value = '';
                 D.input.style.height = 'auto';
                 D.input.focus();
                 D.sendBtn.classList.remove('active');
+                renderHistory(); // BUG 5 FIX: ensure sidebar active-highlight is correct
                 return;
             }
 
             const sess = { id: uid(), title: 'New Chat', messages: [], isLoading: false };
             S.sessions.unshift(sess);
-            
+
+            // BUG 1 FIX: Set S.activeId atomically BEFORE activateSession so any
+            // in-flight sendMessage() closures that re-check S.activeId see the correct value.
+            S.activeId = sess.id;
+
             // Clear input box state cleanly
             D.input.value = '';
             D.input.style.height = 'auto';
             D.sendBtn.classList.remove('active');
-            
+
             activateSession(sess.id);
         }
 
@@ -536,6 +542,10 @@
             S.activeId = id;
             const sess = S.sessions.find(s => s.id === id);
             if (!sess) return;
+
+            // BUG 6 FIX: Always clear the messages DOM before switching sessions
+            // to prevent stale nodes from the previous session being visible.
+            D.messages.innerHTML = '';
 
             if (sess.messages.length === 0) {
                 D.welcome.style.display = 'flex';
@@ -546,9 +556,10 @@
                 renderMessages(sess.messages);
             }
 
-            // Clear input box to avoid stale content leakage across sessions
+            // Clear input box to avoid stale content leakage across sessions (BUG 4)
             D.input.value = '';
             D.input.style.height = 'auto';
+            D.sendBtn.classList.remove('active');
 
             D.typing.style.display = sess.isLoading ? 'block' : 'none';
             updateInputState(sess.isLoading);
@@ -611,27 +622,38 @@
             const text = D.input.value.trim();
             if (!text) return;
 
-            const sess = S.sessions.find(s => s.id === S.activeId);
+            // BUG 1 FIX: Snapshot activeId at the START of this call.
+            // All checks against the session must use this snapshot, not a live S.activeId,
+            // so a concurrent newSession() cannot redirect this message to the wrong session.
+            const sendingSessionId = S.activeId;
+            const sess = S.sessions.find(s => s.id === sendingSessionId);
             if (!sess || sess.isLoading) return;
 
-            // Update title based on the first message sent
-            if (sess.messages.length === 0) {
+            // BUG 6 FIX: If this is the first message, show chat container BEFORE
+            // appending to DOM. Also use renderMessages() to avoid double-render.
+            const isFirstMessage = sess.messages.length === 0;
+            if (isFirstMessage) {
                 sess.title = text.length > 25 ? text.substring(0, 25) + '...' : text;
                 D.welcome.style.display = 'none';
                 D.chatContainer.style.display = 'block';
-                renderHistory(); // Update title immediately in sidebar
+                D.messages.innerHTML = ''; // clear stale DOM
+                renderHistory(); // update sidebar title immediately
             }
 
             const uMsg = { role: 'user', content: text };
             sess.messages.push(uMsg);
-            appendMessageUI(uMsg);
-            
+
+            // Only update DOM if this session is still active
+            if (S.activeId === sendingSessionId) {
+                appendMessageUI(uMsg);
+            }
+
             D.input.value = '';
             D.input.style.height = 'auto';
             D.sendBtn.classList.remove('active');
-            
+
             sess.isLoading = true;
-            if (S.activeId === sess.id) {
+            if (S.activeId === sendingSessionId) {
                 D.typing.style.display = 'block';
                 updateInputState(true);
                 scrollBottom();
@@ -641,9 +663,9 @@
                 const response = await fetch(getApiUrl(), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         message: text,
-                        session_id: sess.id 
+                        session_id: sess.id  // always use sess.id, not S.activeId
                     })
                 });
 
@@ -651,13 +673,15 @@
                     const errRes = await response.json().catch(() => ({}));
                     throw new Error(errRes.detail || `Server returned status ${response.status}`);
                 }
-                
+
                 const data = await response.json();
                 const replyText = data.reply || "I'm sorry, I couldn't process that.";
                 const bMsg = { role: 'bot', content: replyText };
                 sess.messages.push(bMsg);
-                
-                if (S.activeId === sess.id) {
+
+                // BUG 6 FIX: Only update DOM if the user hasn't switched away.
+                // If they switched away and back, activateSession already rendered the history.
+                if (S.activeId === sendingSessionId) {
                     D.typing.style.display = 'none';
                     appendMessageUI(bMsg);
                     scrollBottom();
@@ -666,15 +690,15 @@
                 const errorText = e.message || "Error connecting to server. Please ensure the backend is running.";
                 const eMsg = { role: 'bot', content: `Error: ${errorText}` };
                 sess.messages.push(eMsg);
-                
-                if (S.activeId === sess.id) {
+
+                if (S.activeId === sendingSessionId) {
                     D.typing.style.display = 'none';
                     appendMessageUI(eMsg);
                     scrollBottom();
                 }
             } finally {
                 sess.isLoading = false;
-                if (S.activeId === sess.id) {
+                if (S.activeId === sendingSessionId) {
                     updateInputState(false);
                 }
             }
