@@ -13,9 +13,11 @@ logger = logging.getLogger("chatbot.main")
 
 app = FastAPI(title="AI Chatbot Backend", version="1.0.0")
 
-# Absolute path for index.html
+# Absolute path configuration for HTML files
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LANDING_PATH = os.path.join(BASE_DIR, "landing.html")
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
+TEAM_PATH = os.path.join(BASE_DIR, "team.html")
 
 # CORS middleware configuration to permit local files and cross-origin access
 app.add_middleware(
@@ -43,23 +45,34 @@ class ChatRequest(BaseModel):
 # Simple rate limiter tracking last request timestamp per session_id
 session_rate_limit = {}
 
-@app.get("/", response_class=HTMLResponse)
-async def serve_home():
-    if not os.path.exists(INDEX_PATH):
-        logger.error(f"index.html not found at expected path: {INDEX_PATH}")
+def serve_html_file(file_path: str, name: str):
+    if not os.path.exists(file_path):
+        logger.error(f"{name} not found at expected path: {file_path}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
-            detail="index.html not found"
+            detail=f"{name} not found"
         )
     try:
-        with open(INDEX_PATH, "r", encoding="utf-8") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
     except Exception as e:
-        logger.exception("Failed to read index.html")
+        logger.exception(f"Failed to read {name}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error loading homepage"
+            detail=f"Error loading {name}"
         )
+
+@app.get("/", response_class=HTMLResponse)
+async def serve_landing():
+    return serve_html_file(LANDING_PATH, "landing.html")
+
+@app.get("/chatbot", response_class=HTMLResponse)
+async def serve_chatbot():
+    return serve_html_file(INDEX_PATH, "index.html")
+
+@app.get("/team", response_class=HTMLResponse)
+async def serve_team():
+    return serve_html_file(TEAM_PATH, "team.html")
 
 @app.post("/chat")
 async def chat_endpoint(data: ChatRequest):
