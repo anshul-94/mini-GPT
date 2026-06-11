@@ -194,10 +194,17 @@
             /* fade-in animation */
             opacity: 0;
             transition: opacity 0.25s ease;
+            /* FIX: invisible overlay must NOT intercept touch/click events.
+               Without this, the transparent overlay covers the entire screen
+               on mobile (display:block is forced by the media query) and
+               swallows every tap before the textarea can receive focus. */
+            pointer-events: none;
         }
 
         #sidebar-overlay.visible {
             opacity: 1;
+            /* FIX: only intercept events when the overlay is actually visible */
+            pointer-events: auto;
         }
 
         /* ============================================================
@@ -381,10 +388,12 @@
             /* safe-area bottom for iPhone notch / home indicator */
             padding-bottom: max(16px, env(safe-area-inset-bottom));
             background: linear-gradient(to top, var(--sidebar-bg) 60%, transparent);
-            /* ROOT FIX: explicit stacking context so input is never painted
-               below chat bubbles on Android WebView / Samsung Browser */
+            /* FIX: z-index must be ABOVE the sidebar-overlay (z-index:150) so
+               the input area is never covered by the overlay on mobile.
+               Previously z-index:10 allowed the overlay to sit on top and
+               block all taps on the textarea. */
             position: relative;
-            z-index: 10;
+            z-index: 160;
         }
 
         .input-container {
@@ -425,6 +434,12 @@
             line-height: 1.5;
             /* prevent iOS auto-zoom (font < 16px triggers zoom) */
             font-size: max(16px, 15px);
+            /* FIX: eliminates the 300ms tap delay on iOS Safari and Android Chrome
+               so the tap-to-focus is instantaneous. */
+            touch-action: manipulation;
+            /* FIX: ensure the element is always interactable */
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         textarea::placeholder { color: var(--text-secondary); }
@@ -476,13 +491,14 @@
         }
 
         /* ============================================================
-           MOBILE HAMBURGER TOGGLE
+           MOBILE HAMBURGER TOGGLE & HEADER
         ============================================================ */
+        .mobile-header {
+            display: none;
+        }
+
         .menu-toggle {
             display: none;
-            position: absolute;
-            top: 14px;
-            left: 14px;
             background-color: var(--bubble-user);
             border: 1px solid var(--bubble-border);
             color: var(--text-primary);
@@ -537,37 +553,114 @@
            BREAKPOINT: MOBILE  ≤ 768px
         ============================================================ */
         @media (max-width: 768px) {
-            /* Show hamburger */
-            .menu-toggle { display: flex; }
+            /* Show mobile header and hamburger */
+            .mobile-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                height: 56px;
+                background-color: var(--sidebar-bg);
+                border-bottom: 1px solid var(--bubble-border);
+                padding: 0 16px;
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                flex-shrink: 0;
+                width: 100%;
+            }
 
-            /* ROOT FIX: Sidebar is position:fixed so it is removed from
-               the normal flow and does NOT affect #main-content layout.
-               Height uses 100dvh so it stays within the visual viewport
-               even when the keyboard opens. */
+            .header-title {
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--text-primary);
+                text-align: center;
+                flex: 1;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin: 0 12px;
+            }
+
+            .menu-toggle {
+                display: flex;
+                background-color: transparent;
+                border: none;
+                color: var(--text-secondary);
+                width: 36px;
+                height: 36px;
+                align-items: center;
+                justify-content: center;
+                border-radius: 6px;
+            }
+            .menu-toggle:hover {
+                background-color: var(--sidebar-hover);
+                color: var(--text-primary);
+            }
+
+            .header-new-chat-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background-color: transparent;
+                border: none;
+                color: var(--text-secondary);
+                width: 36px;
+                height: 36px;
+                cursor: pointer;
+                border-radius: 6px;
+                transition: var(--transition);
+                touch-action: manipulation;
+            }
+            .header-new-chat-btn:hover {
+                background-color: var(--sidebar-hover);
+                color: var(--text-primary);
+            }
+
+            /* ROOT FIX: Sidebar uses transform for slide animation.
+               Height uses 100dvh to stay within visual viewport. */
             #sidebar {
                 position: fixed;
-                left: -100%;
+                left: 0;
                 top: 0;
                 bottom: 0;
                 height: 100%;
                 height: 100dvh;
-                width: min(var(--sidebar-width), 80vw);
-                /* Explicit left-property transition only (not 'all') */
-                transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+                width: 80%;
+                max-width: 320px;
+                transform: translateX(-100%);
+                visibility: hidden;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                            visibility 0.3s linear;
                 box-shadow: 10px 0 40px rgba(0, 0, 0, 0.6);
                 padding-left: max(16px, env(safe-area-inset-left));
+                pointer-events: none;
             }
 
-            #sidebar.open { left: 0; }
+            /* Open state */
+            #sidebar.open {
+                transform: translateX(0);
+                visibility: visible;
+                pointer-events: auto;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                            visibility 0s linear;
+            }
 
             /* Overlay visible on mobile */
-            #sidebar-overlay { display: block; }
+            #sidebar-overlay {
+                display: block;
+                visibility: hidden;
+                opacity: 0;
+                transition: opacity 0.3s ease, visibility 0.3s linear;
+            }
+            #sidebar-overlay.visible {
+                visibility: visible;
+                opacity: 1;
+                transition: opacity 0.3s ease, visibility 0s linear;
+            }
 
-            /* ROOT FIX: #main-content must NOT have overflow:clip/hidden on mobile.
-               The flex child needs to shrink when the keyboard opens.
-               We clear it here and let #chat-container handle its own scroll. */
+            /* main-content layout on mobile */
             #main-content {
-                padding-top: 64px;
+                padding-top: 0; /* Sticky mobile-header handles spacing */
                 width: 100%;
                 overflow: visible;
             }
@@ -660,9 +753,15 @@
     </aside>
 
     <main id="main-content">
-        <button id="menu-toggle" class="menu-toggle" aria-label="Toggle Sidebar">
-            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </button>
+        <header class="mobile-header">
+            <button id="menu-toggle" class="menu-toggle" aria-label="Toggle Sidebar">
+                <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <div class="header-title">AI Assistant</div>
+            <button id="header-new-chat-btn" class="header-new-chat-btn" aria-label="New Chat">
+                <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+        </header>
 
         <div id="welcome-screen">
             <h1 class="welcome-title">What would you like to know?</h1>
@@ -832,6 +931,12 @@
             D.input.style.height = 'auto';
             D.sendBtn.classList.remove('active');
 
+            // Dynamic header title update
+            const headerTitle = document.querySelector('.header-title');
+            if (headerTitle) {
+                headerTitle.textContent = sess.messages.length === 0 ? 'AI Assistant' : sess.title;
+            }
+
             D.typing.style.display = sess.isLoading ? 'block' : 'none';
             updateInputState(sess.isLoading);
             renderHistory();
@@ -911,6 +1016,10 @@
                 D.chatContainer.style.display = 'block';
                 D.messages.innerHTML = ''; // clear stale DOM
                 renderHistory(); // update sidebar title immediately
+                const headerTitle = document.querySelector('.header-title');
+                if (headerTitle) {
+                    headerTitle.textContent = sess.title;
+                }
             }
 
             const uMsg = { role: 'user', content: text };
@@ -996,14 +1105,32 @@
         };
 
         D.sendBtn.onclick = sendMessage;
-        D.newBtn.onclick = newSession;
+        D.newBtn.onclick = () => {
+            newSession();
+            if (window.innerWidth <= 768) {
+                closeSidebar();
+            }
+        };
+        const headerNewBtn = $('header-new-chat-btn');
+        if (headerNewBtn) {
+            headerNewBtn.onclick = () => {
+                newSession();
+                if (window.innerWidth <= 768) {
+                    closeSidebar();
+                }
+            };
+        }
 
-        // Helper: open / close sidebar with overlay animation
+        // ── Sidebar helpers (MOBILE SIDEBAR BUG FIX) ───────────────────
+        // When the sidebar is closed, visibility:hidden + pointer-events:none
+        // ensure it never sits in the hit-test tree and blocks the input box.
+        // We add/remove the .open class which toggles those properties via CSS.
+        // ────────────────────────────────────────────────────────────────────
         function openSidebar() {
             const sidebar = $('sidebar');
             const overlay = $('sidebar-overlay');
             sidebar.classList.add('open');
-            requestAnimationFrame(() => overlay.classList.add('visible'));
+            overlay.classList.add('visible');
         }
 
         function closeSidebar() {
@@ -1020,26 +1147,26 @@
             isOpen ? closeSidebar() : openSidebar();
         };
 
-        // Tapping the overlay closes the sidebar
-        $('sidebar-overlay').onclick = () => closeSidebar();
+        // Overlay: close on both click and touchstart for instant iOS response
+        const overlayEl = $('sidebar-overlay');
+        overlayEl.addEventListener('click',      () => closeSidebar());
+        overlayEl.addEventListener('touchstart', () => closeSidebar(), { passive: true });
 
-        // ROOT FIX: Use a document-level click handler that explicitly excludes
-        // #input-area. The old body.onclick was catching send-button taps before
-        // the button's own onclick could fire on slow Android devices.
+        // Document-level handler: close sidebar when tapping outside of it.
+        // Explicitly excludes #input-area so tapping the textarea never
+        // triggers closeSidebar and swallows the focus event.
         document.addEventListener('click', (e) => {
-            if (window.innerWidth > 768) return; // desktop: no sidebar to close
-            const sidebar = $('sidebar');
-            const toggle  = $('menu-toggle');
-            const overlay = $('sidebar-overlay');
+            if (window.innerWidth > 768) return;        // not needed on desktop
+            if (!$('sidebar').classList.contains('open')) return; // already closed
+            const sidebar   = $('sidebar');
+            const toggle    = $('menu-toggle');
             const inputArea = $('input-area');
-            // Do not close sidebar when tapping the input area or its children.
+
+            // Never close when the user taps the input area
             if (inputArea && inputArea.contains(e.target)) return;
-            if (
-                !sidebar.contains(e.target) &&
-                e.target !== toggle &&
-                !toggle.contains(e.target) &&
-                e.target !== overlay
-            ) {
+
+            // Close if tap landed outside sidebar + toggle
+            if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
                 closeSidebar();
             }
         });

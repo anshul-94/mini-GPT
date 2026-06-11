@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Meet the AI engineering team behind the Memory Driven Conversational AI Chatbot.">
+    <title>Meet the Team — Memory Driven AI Chatbot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ─── tokens ────────────────────────────────────────────── */
+        :root {
+            --green:      #22c55e;
+            --green-dim:  #16a34a;
+            --green-bg:   rgba(34, 197, 94, .07);
+            --green-bd:   rgba(34, 197, 94, .2);
+            --bg:         #05070f;
+            --surface:    #0d1117;
+            --surface-2:  #0b1120;
+            --border:     #1f2937;
+            --border-hi:  #2d3748;
+            --text-1:     #e5e7eb;
+            --text-2:     #9ca3af;
+            --text-3:     #6b7280;
+            --radius:     12px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html  { scroll-behavior: smooth; background: var(--bg); }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            color: var(--text-1);
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background: radial-gradient(circle at center, #1a2238 0%, #0b0f1a 60%, #05070f 100%);
+            background-attachment: fixed;
+        }
+
+        /* subtle top glow */
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            background: radial-gradient(ellipse 60% 40% at 50% 0%,
+                rgba(34,197,94,.06) 0%, transparent 65%);
+        }
+
+        /* ─── layout ────────────────────────────────────────────── */
+        .wrap {
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 0 clamp(16px, 4vw, 40px);
+        }
+
+        /* ─── nav ───────────────────────────────────────────────── */
+        nav {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            height: 60px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-brand {
+            display: flex; align-items: center; gap: 10px;
+            text-decoration: none; color: var(--text-1);
+        }
+        .nav-logo {
+            width: 32px; height: 32px;
+            background: var(--green-bg);
+            border: 1px solid var(--green-bd);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px;
+        }
+        .nav-name { font-size: 15px; font-weight: 600; }
+
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 15px;
+            border-radius: 8px;
+            font-size: 13px; font-weight: 500;
+            color: var(--text-2);
+            background: transparent;
+            border: 1px solid var(--border);
+            text-decoration: none;
+            transition: color .15s ease, border-color .15s ease, background .15s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .back-btn:hover {
+            color: var(--text-1);
+            border-color: var(--border-hi);
+            background: #0f172a;
+        }
+
+        /* ─── hero ──────────────────────────────────────────────── */
+        .hero {
+            padding: clamp(48px, 9vh, 84px) 0 clamp(36px, 6vh, 60px);
+            text-align: center;
+        }
+        .hero-tag {
+            display: inline-block;
+            font-size: 11px; font-weight: 600;
+            letter-spacing: 2px; text-transform: uppercase;
+            color: var(--green);
+            background: var(--green-bg);
+            border: 1px solid var(--green-bd);
+            border-radius: 99px;
+            padding: 4px 14px;
+            margin-bottom: 20px;
+        }
+        .hero-title {
+            font-size: clamp(28px, 5vw, 50px);
+            font-weight: 700; letter-spacing: -1px; line-height: 1.1;
+            color: var(--text-1); margin-bottom: 12px;
+        }
+        .hero-sub {
+            font-size: clamp(14px, 1.8vw, 17px); font-weight: 400;
+            color: var(--text-2); max-width: 480px;
+            margin: 0 auto; line-height: 1.65;
+        }
+
+        /* ─── sections ──────────────────────────────────────────── */
+        .section-wrap {
+            padding: clamp(36px, 6vh, 64px) 0;
+            border-top: 1px solid var(--border);
+        }
+        .section-meta { margin-bottom: clamp(22px, 4vh, 38px); }
+        .section-tag {
+            font-size: 11px; font-weight: 600;
+            letter-spacing: 2px; text-transform: uppercase;
+            color: var(--text-3); margin-bottom: 6px;
+        }
+        .section-title {
+            font-size: clamp(18px, 2.5vw, 26px); font-weight: 700;
+            letter-spacing: -.4px; color: var(--text-1);
+        }
+
+        /* ─── team grid ─────────────────────────────────────────── */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        /* ─── member card ───────────────────────────────────────── */
+        .member-card {
+            background: rgba(13, 17, 23, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 32px 24px;
+            display: flex; 
+            flex-direction: column; 
+            gap: 18px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 24px rgba(0,0,0,.3);
+            /* scroll-reveal */
+            opacity: 0; 
+            transform: translateY(18px);
+            position: relative;
+            overflow: hidden;
+        }
+        .member-card.in {
+            opacity: 1; 
+            transform: translateY(0);
+            transition: opacity .5s ease, transform .5s ease,
+                        border-color .3s, box-shadow .3s, background .3s;
+        }
+        .member-card:hover {
+            border-color: rgba(34, 197, 94, 0.3);
+            background: rgba(13, 17, 23, 0.95);
+            box-shadow: 0 12px 40px rgba(0,0,0,.55), 0 0 20px rgba(34, 197, 94, 0.05);
+            transform: translateY(-4px);
+        }
+
+        /* ─── letter avatar ─────────────────────────────────────── */
+        .avatar {
+            width: 60px; 
+            height: 60px; 
+            border-radius: 50%;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-size: 24px; 
+            font-weight: 700; 
+            color: #fff;
+            user-select: none; 
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        .av-a { background: linear-gradient(135deg, #16a34a, #22c55e); }
+        .av-r { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
+        .av-i { background: linear-gradient(135deg, #2563eb, #60a5fa); }
+
+        /* ─── member body ───────────────────────────────────────── */
+        .member-name {
+            font-size: 18px; 
+            font-weight: 600;
+            color: var(--text-1); 
+            letter-spacing: -0.3px;
+            margin-bottom: 4px;
+        }
+        .member-role {
+            font-size: 13px; 
+            font-weight: 500;
+            color: var(--green); 
+            margin-bottom: 12px;
+            line-height: 1.45;
+        }
+        .member-desc {
+            font-size: 14px; 
+            color: var(--text-2);
+            line-height: 1.6;
+        }
+
+        /* ─── skill tags ────────────────────────────────────────── */
+        .skill-tags {
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 6px;
+            margin-top: 12px;
+        }
+        .skill {
+            font-size: 12px; 
+            font-weight: 500;
+            padding: 4px 10px; 
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--text-2);
+            background: rgba(255, 255, 255, 0.03);
+            transition: all 0.2s ease;
+        }
+        .skill:hover {
+            background: rgba(34, 197, 94, 0.08);
+            border-color: rgba(34, 197, 94, 0.2);
+            color: var(--green);
+        }
+
+        /* ─── social row ────────────────────────────────────────── */
+        .social-row {
+            display: flex; 
+            gap: 10px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            margin-top: auto; /* Push social row to the bottom for perfect vertical alignment */
+        }
+        .social-btn {
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            gap: 8px;
+            font-size: 13px; 
+            font-weight: 500; 
+            color: var(--text-2);
+            padding: 8px 16px; 
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            text-decoration: none; 
+            background: rgba(255, 255, 255, 0.02);
+            transition: all 0.2s ease;
+            flex: 1;
+            cursor: pointer; 
+            touch-action: manipulation;
+        }
+        .social-btn:hover {
+            color: var(--text-1);
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .social-btn.disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            background: transparent;
+        }
+        .social-btn.disabled:hover {
+            color: var(--text-3);
+            border-color: rgba(255, 255, 255, 0.04);
+            background: transparent;
+        }
+        .social-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+        /* ─── tooltips ──────────────────────────────────────────── */
+        [data-tooltip] {
+            position: relative;
+        }
+        [data-tooltip]::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            background: #0d1117;
+            color: var(--text-1);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+        [data-tooltip]:hover::before {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+
+        /* ─── project overview ──────────────────────────────────── */
+        .project-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: clamp(24px, 4vw, 40px);
+            opacity: 0; transform: translateY(16px);
+            transition: opacity .5s ease, transform .5s ease;
+        }
+        .project-card.in { opacity: 1; transform: translateY(0); }
+
+        .project-header { margin-bottom: 20px; }
+        .project-title {
+            font-size: clamp(18px, 2.5vw, 24px); font-weight: 700;
+            letter-spacing: -.4px; color: var(--text-1); margin-bottom: 8px;
+        }
+        .project-desc {
+            font-size: 14px; color: var(--text-2);
+            line-height: 1.75; margin-bottom: 20px;
+        }
+
+        .project-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(20px, 3.5vw, 40px);
+        }
+
+        /* feature list */
+        .feature-list {
+            list-style: none;
+            display: flex; flex-direction: column; gap: 7px;
+        }
+        .feature-list li {
+            display: flex; align-items: flex-start; gap: 9px;
+            font-size: 13px; color: var(--text-2); line-height: 1.5;
+        }
+        .feature-list li::before {
+            content: '✓';
+            font-size: 11px; font-weight: 700;
+            color: var(--green); flex-shrink: 0; margin-top: 2px;
+        }
+
+        /* stat boxes */
+        .stat-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+        }
+        .stat-box {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px; text-align: center;
+        }
+        .stat-num {
+            font-size: clamp(22px, 3vw, 30px); font-weight: 700;
+            color: var(--green); letter-spacing: -1px;
+            line-height: 1; margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 11px; font-weight: 500;
+            color: var(--text-3); letter-spacing: .2px;
+        }
+        .status-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--green);
+            background: var(--green-bg);
+            border: 1px solid var(--green-bd);
+            padding: 3px 10px;
+            border-radius: 99px;
+            margin-bottom: 6px;
+        }
+
+        /* ─── workflow section ──────────────────────────────────── */
+        .workflow-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .wf-step {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 20px;
+            display: flex; align-items: center; gap: 14px;
+            opacity: 0; transform: translateY(12px);
+            transition: opacity .4s ease, transform .4s ease,
+                        border-color .15s, background .15s;
+        }
+        .wf-step.in { opacity: 1; transform: translateY(0); }
+        .wf-step:hover { border-color: var(--border-hi); background: var(--surface-2); }
+
+        .wf-num {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--green-bg); border: 1px solid var(--green-bd);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; color: var(--green);
+            flex-shrink: 0;
+        }
+        .wf-label {
+            font-size: 14px; font-weight: 500; color: var(--text-1);
+        }
+
+        .wf-arrow {
+            display: flex; justify-content: center; align-items: center;
+            height: 20px;
+        }
+        .wf-arrow svg {
+            width: 14px; height: 14px; color: var(--text-3);
+        }
+
+        /* ─── tech stack ────────────────────────────────────────── */
+        .tech-sections {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+        .tech-group {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            opacity: 0; transform: translateY(14px);
+            transition: opacity .45s ease, transform .45s ease,
+                        border-color .15s;
+        }
+        .tech-group.in { opacity: 1; transform: translateY(0); }
+        .tech-group:hover { border-color: var(--border-hi); }
+
+        .tech-group-label {
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase;
+            color: var(--green); margin-bottom: 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .tech-group-label::after {
+            content: '';
+            flex: 1; height: 1px; background: var(--border);
+        }
+
+        .tech-items {
+            display: flex; flex-direction: column; gap: 9px;
+        }
+        .tech-item {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .tech-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--border-hi); flex-shrink: 0;
+        }
+        .tech-name-txt {
+            font-size: 13px; font-weight: 500; color: var(--text-2);
+        }
+
+        /* ─── footer ────────────────────────────────────────────── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: clamp(28px, 5vh, 44px) 0 clamp(18px, 3vh, 28px);
+            text-align: center;
+        }
+        .footer-back {
+            display: inline-flex; align-items: center; gap: 7px;
+            font-weight: 500;
+            color: #052e16; background: var(--green);
+            padding: 10px 20px; border-radius: 8px; border: none;
+            text-decoration: none; cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        .footer-back:hover {
+            background-color: var(--green-dim);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(34, 197, 94, 0.35);
+        }
+        .footer-copy { font-size: 12px; color: var(--text-3); margin-top: 8px; }
+
+        /* ─── reveal delays ─────────────────────────────────────── */
+        .d1 { transition-delay: .04s !important; }
+        .d2 { transition-delay: .12s !important; }
+        .d3 { transition-delay: .20s !important; }
+        .d4 { transition-delay: .06s !important; }
+        .d5 { transition-delay: .14s !important; }
+        .d6 { transition-delay: .22s !important; }
+        .d7 { transition-delay: .30s !important; }
+        .w1 { transition-delay: .00s !important; }
+        .w2 { transition-delay: .08s !important; }
+        .w3 { transition-delay: .16s !important; }
+        .w4 { transition-delay: .24s !important; }
+        .w5 { transition-delay: .32s !important; }
+        .w6 { transition-delay: .40s !important; }
+
+        /* ─── responsive ────────────────────────────────────────── */
+        @media (max-width: 920px) {
+            .team-grid      { grid-template-columns: repeat(2, 1fr); }
+            .tech-sections  { grid-template-columns: repeat(2, 1fr); }
+            .project-layout { grid-template-columns: 1fr; }
+            .stat-grid      { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 680px) {
+            .team-grid      { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
+            .tech-sections  { grid-template-columns: repeat(2, 1fr); }
+            .stat-grid      { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .team-grid { grid-template-columns: 1fr; max-width: 100%; margin: 0 auto; }
+            .tech-sections { grid-template-columns: 1fr; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr); }
+            .wrap { padding: 0 clamp(14px, 4vw, 24px); }
+            .hero { padding: clamp(36px, 7vh, 60px) 0 clamp(24px, 4vh, 40px); }
+            .section-wrap { padding: clamp(28px, 5vh, 48px) 0; }
+            .member-card { padding: 20px 16px; }
+            .project-card { padding: clamp(18px, 3vw, 28px); }
+        }
+        @media (max-width: 400px) {
+            .tech-sections { grid-template-columns: 1fr; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr); }
+            .skill { font-size: 10px; padding: 2px 7px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            * { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+            .member-card, .tech-group, .project-card, .wf-step {
+                opacity: 1 !important; transform: none !important;
+            }
+        }
+
+        /* ── Floating AI Assistant Button ──────────────────────── */
+        .floating-ai-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: var(--green);
+            color: #052e16;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 16px rgba(34, 197, 94, 0.4), 0 0 0 1px rgba(34, 197, 94, 0.2);
+            z-index: 1000;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .floating-ai-btn:hover {
+            background-color: var(--green-dim);
+            transform: scale(1.08) translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.5), 0 0 0 1px rgba(34, 197, 94, 0.3);
+        }
+
+        .floating-ai-btn:active {
+            transform: scale(0.95);
+        }
+
+        .floating-ai-btn .ai-btn-icon {
+            font-size: 22px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Custom Left Tooltip Override */
+        .floating-ai-btn[data-tooltip]::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: 50% !important;
+            right: 125% !important;
+            bottom: auto !important;
+            left: auto !important;
+            transform: translateY(-50%) scale(0.9) !important;
+            background: var(--surface);
+            color: var(--text-1);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+        }
+
+        .floating-ai-btn[data-tooltip]:hover::before {
+            opacity: 1 !important;
+            transform: translateY(-50%) scale(1) !important;
+        }
+
+        @media (max-width: 768px) {
+            .floating-ai-btn {
+                top: 780px;
+                right: 16px;
+                width: 40px;
+                height: 40px;
+            }
+            .floating-ai-btn .ai-btn-icon {
+                font-size: 18px;
+            }
+            /* Disable tooltip on touch screens */
+            .floating-ai-btn[data-tooltip]::before {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stat-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 8px !important;
+            }
+            .stat-box {
+                padding: 12px 8px !important;
+            }
+            .status-badge {
+                font-size: 10px !important;
+                padding: 2px 6px !important;
+                white-space: normal !important;
+                display: inline-flex !important;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <!-- ── nav ──────────────────────────────────────────────── -->
+    <nav aria-label="Site navigation">
+        <a href="landing.html" class="nav-brand" aria-label="Home">
+            <div class="nav-logo" aria-hidden="true">🤖</div>
+            <span class="nav-name">MiniGPT</span>
+        </a>
+    </nav>
+
+    <!-- ── hero ─────────────────────────────────────────────── -->
+    <header class="hero">
+        <span class="hero-tag">AI Engineering Team</span>
+        <h1 class="hero-title">Meet the Team</h1>
+        <p class="hero-sub">The engineers and researchers who designed, built, and shipped the Memory Driven AI Chatbot.</p>
+    </header>
+
+    <!-- ── team members ─────────────────────────────────────── -->
+    <section class="section-wrap" aria-labelledby="team-h">
+        <div class="section-meta">
+            <p class="section-tag">Contributors</p>
+            <h2 class="section-title" id="team-h">Team Members</h2>
+        </div>
+
+        <div class="team-grid">
+
+            <!-- Anshul Patidar -->
+            <article class="member-card d1" aria-label="Anshul Patidar">
+                <div class="avatar av-a" aria-hidden="true">A</div>
+                <div>
+                    <p class="member-name">Anshul Patidar</p>
+                    <p class="member-role">AI Engineer, ML Engineer &amp; Backend Developer</p>
+                    <p class="member-desc">AI Engineer focused on Memory-Driven Conversational AI systems, Machine Learning, Deep Learning, Generative AI, NLP, Prompt Engineering, LangChain, FastAPI, and intelligent conversational workflows.</p>
+                    <div class="skill-tags">
+                        <span class="skill">Machine Learning</span>
+                        <span class="skill">Deep Learning</span>
+                        <span class="skill">Generative AI</span>
+                        <span class="skill">Python</span>
+                        <span class="skill">FastAPI</span>
+                        <span class="skill">LangChain</span>
+                        <span class="skill">RAG Systems</span>
+                        <span class="skill">AI System Design</span>
+                        <span class="skill">LLM Integration</span>
+                    </div>
+                </div>
+                <div class="social-row">
+                    <a href="https://www.linkedin.com/in/anshul-patidar-5169b8328/" class="social-btn" target="_blank" rel="noopener noreferrer" aria-label="Anshul Patidar LinkedIn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        LinkedIn
+                    </a>
+                    <a href="https://github.com/anshul-94" class="social-btn" target="_blank" rel="noopener noreferrer" aria-label="Anshul Patidar GitHub">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        GitHub
+                    </a>
+                </div>
+            </article>
+
+            <!-- Radhika Patel -->
+            <article class="member-card d2" aria-label="Radhika Patel">
+                <div class="avatar av-r" aria-hidden="true">R</div>
+                <div>
+                    <p class="member-name">Radhika Patel</p>
+                    <p class="member-role">Machine learning Engineer &amp; Backend Developer</p>
+
+<p class="member-desc">
+Focused on Machine Learning, Deep Learning, Generative AI, FastAPI development, Python programming, and AI-powered backend solutions. Contributes to intelligent system design, model integration, and scalable AI applications.
+</p>
+
+<div class="skill-tags">
+    <span class="skill">Machine Learning</span>
+    <span class="skill">Deep Learning</span>
+    <span class="skill">Generative AI</span>
+    <span class="skill">FastAPI</span>
+    <span class="skill">Python</span>
+    <span class="skill">Scikit-Learn</span>
+    <span class="skill">AI Solutions</span>
+</div>
+                </div>
+                <div class="social-row">
+                    <a class="social-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        LinkedIn
+                    </a>
+                    <a href="https://github.com/radhikap0406coder" class="social-btn" target="_blank" rel="noopener noreferrer" aria-label="Radhika Patel GitHub">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        GitHub
+                    </a>
+                </div>
+            </article>
+
+            <!-- Ishita Vishwakarma -->
+            <article class="member-card d3" aria-label="Ishita Vishwakarma">
+                <div class="avatar av-i" aria-hidden="true">I</div>
+                <div>
+                    <p class="member-name">Ishita Vishwakarma</p>
+<p class="member-role">MERN Stack Developer &amp; Project Coordinator</p>
+
+<p class="member-desc">
+Focused on MERN Stack development, responsive web applications, API integration, project coordination, testing, and documentation. Contributes to creating user-friendly and scalable web solutions.
+</p>
+
+<div class="skill-tags">
+    <span class="skill">MongoDB</span>
+    <span class="skill">Express.js</span>
+    <span class="skill">React.js</span>
+    <span class="skill">Node.js</span>
+    <span class="skill">JavaScript</span>
+    <span class="skill">Python</span>
+    <span class="skill">REST APIs</span>
+    <span class="skill">Responsive UI</span>
+</div>
+                </div>
+                <div class="social-row">
+                    <a href="https://www.linkedin.com/in/ishita-vishwakarma-bb88a527a/" class="social-btn" target="_blank" rel="noopener noreferrer" aria-label="Ishita Vishwakarma LinkedIn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        LinkedIn
+                    </a>
+                    <a href="https://github.com/Ishitavish" class="social-btn" target="_blank" rel="noopener noreferrer" aria-label="Ishita Vishwakarma GitHub">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        GitHub
+                    </a>
+                </div>
+            </article>
+
+        </div>
+    </section>
+
+    <!-- ── project overview ──────────────────────────────────── -->
+    <section class="section-wrap" aria-labelledby="project-h">
+        <div class="section-meta">
+            <p class="section-tag">The Project</p>
+            <h2 class="section-title" id="project-h">Project Overview</h2>
+        </div>
+
+        <div class="project-card" id="project-card">
+            <div class="project-header">
+                <h3 class="project-title">Memory-Driven Conversational AI (Mini ChatGPT)</h3>
+                <p class="project-desc">Memory-Driven Conversational AI is an intelligent chatbot system designed to understand conversational context, retain important user information, and generate personalized responses through advanced memory management techniques.</p>
+            </div>
+
+            <div class="project-layout">
+                <div>
+                    <p class="section-tag" style="margin-bottom:12px;">The system combines:</p>
+                    <ul class="feature-list" aria-label="Key features" style="margin-bottom: 16px;">
+                        <li>Short-Term Memory (STM)</li>
+                        <li>Long-Term Memory (LTM)</li>
+                        <li>Memory Retrieval</li>
+                        <li>Context Awareness</li>
+                        <li>Personalized Response Generation</li>
+                    </ul>
+                    <p class="project-desc" style="font-size: 13px; line-height: 1.6; margin-bottom: 0;">to create a more natural and human-like conversational experience.</p>
+                </div>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-num">3</div>
+                        <div class="stat-label">Contributors</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num">10+</div>
+                        <div class="stat-label">Core Technologies</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num">v1.0</div>
+                        <div class="stat-label">Version</div>
+                    </div>
+                    <div class="stat-box">
+                        <span class="status-badge">Active Development</span>
+                        <div class="stat-label">Project Status</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── workflow ──────────────────────────────────────────── -->
+    <section class="section-wrap" aria-labelledby="workflow-h">
+        <div class="section-meta">
+            <p class="section-tag">How It Works</p>
+            <h2 class="section-title" id="workflow-h">System Workflow</h2>
+        </div>
+
+        <div class="workflow-wrap" role="list" aria-label="System workflow steps">
+
+            <div class="wf-step w1" role="listitem">
+                <div class="wf-num">1</div>
+                <p class="wf-label">User Message</p>
+            </div>
+            <div class="wf-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12l7 7 7-7"/>
+                </svg>
+            </div>
+            <div class="wf-step w2" role="listitem">
+                <div class="wf-num">2</div>
+                <p class="wf-label">Short-Term Memory Check</p>
+            </div>
+            <div class="wf-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12l7 7 7-7"/>
+                </svg>
+            </div>
+            <div class="wf-step w3" role="listitem">
+                <div class="wf-num">3</div>
+                <p class="wf-label">Long-Term Memory Retrieval</p>
+            </div>
+            <div class="wf-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12l7 7 7-7"/>
+                </svg>
+            </div>
+            <div class="wf-step w4" role="listitem">
+                <div class="wf-num">4</div>
+                <p class="wf-label">Context Construction</p>
+            </div>
+            <div class="wf-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12l7 7 7-7"/>
+                </svg>
+            </div>
+            <div class="wf-step w5" role="listitem">
+                <div class="wf-num">5</div>
+                <p class="wf-label">AI Response Generation</p>
+            </div>
+            <div class="wf-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12l7 7 7-7"/>
+                </svg>
+            </div>
+            <div class="wf-step w6" role="listitem">
+                <div class="wf-num">6</div>
+                <p class="wf-label">Memory Update</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ── tech stack ────────────────────────────────────────── -->
+    <section class="section-wrap" aria-labelledby="tech-h">
+        <div class="section-meta">
+            <p class="section-tag">Built With</p>
+            <h2 class="section-title" id="tech-h">Technology Stack</h2>
+        </div>
+
+        <div class="tech-sections">
+
+            <div class="tech-group d4">
+                <p class="tech-group-label">Frontend</p>
+                <div class="tech-items">
+                    <div class="tech-item"><div class="tech-dot"></div><span class="tech-name-txt">HTML</span></div>
+                    <div class="tech-item"><div class="tech-dot"></div><span class="tech-name-txt">CSS</span></div>
+                    <div class="tech-item"><div class="tech-dot"></div><span class="tech-name-txt">JavaScript</span></div>
+                </div>
+            </div>
+
+            <div class="tech-group d5">
+                <p class="tech-group-label">Backend</p>
+                <div class="tech-items">
+                    <div class="tech-item"><div class="tech-dot"></div><span class="tech-name-txt">FastAPI</span></div>
+                    <div class="tech-item"><div class="tech-dot"></div><span class="tech-name-txt">Python</span></div>
+                </div>
+            </div>
+
+            <div class="tech-group d6">
+                <p class="tech-group-label">AI Technologies</p>
+                <div class="tech-items">
+                    <div class="tech-item"><div class="tech-dot"></div><span class="tech-name-txt">LangChain</span></div>
+                    <div class="tech-item"><div class="tech-dot"></div><span class="tech-name-txt">Prompt Engineering</span></div>
+                    <div class="tech-item"><div class="tech-dot"></div><span class="tech-name-txt">NLP</span></div>
+                    <div class="tech-item"><div class="tech-dot"></div><span class="tech-name-txt">Retrieval-Augmented Generation (RAG)</span></div>
+                    <div class="tech-item"><div class="tech-dot"></div><span class="tech-name-txt">Conversational AI</span></div>
+                </div>
+            </div>
+
+            <div class="tech-group d7">
+                <p class="tech-group-label">Database</p>
+                <div class="tech-items">
+                    <div class="tech-item"><div class="tech-dot"></div><span class="tech-name-txt">PostgreSQL</span></div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ── project repository ────────────────────────────────── -->
+    <section class="section-wrap" aria-labelledby="repo-h">
+        <div class="section-meta">
+            <p class="section-tag">Repository</p>
+            <h2 class="section-title" id="repo-h">Project Repository</h2>
+        </div>
+
+        <div class="project-card" style="display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 280px;">
+                <h3 class="project-title" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <svg viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px; color: var(--green);"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    Project Repository
+                </h3>
+                <p class="project-desc" style="margin-bottom: 0;">Explore the complete source code, architecture, implementation details, and development progress of the Memory-Driven Conversational AI project.</p>
+            </div>
+            <div>
+                <a href="https://github.com/anshul-94/mini-GPT" target="_blank" rel="noopener noreferrer" class="footer-back" style="margin-bottom: 0; display: inline-flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" fill="currentColor" style="width: 16px; height: 16px;"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    Open Repository
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── footer ────────────────────────────────────────────── -->
+    <footer>
+        <p class="footer-copy">© 2025 Memory Driven AI Chatbot — Anshul, Radhika &amp; Ishita</p>
+    </footer>
+
+</div><!-- /.wrap -->
+
+<a href="index.html" class="floating-ai-btn" aria-label="Open AI Chatbot" data-tooltip="Open AI Chatbot">
+    <span class="ai-btn-icon">🤖</span>
+</a>
+
+<script>
+'use strict';
+
+/* ── scroll reveal ────────────────────────────────────── */
+(function () {
+    const targets = document.querySelectorAll(
+        '.member-card, .tech-group, .project-card, .wf-step'
+    );
+
+    if (!('IntersectionObserver' in window)) {
+        targets.forEach(el => el.classList.add('in'));
+        return;
+    }
+
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.08, rootMargin: '0px 0px -24px 0px' });
+
+    targets.forEach(el => io.observe(el));
+})();
+</script>
+</body>
+</html>

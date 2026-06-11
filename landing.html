@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Memory Driven AI Chatbot — A conversational AI with context-aware memory.">
+    <title>Welcome — Memory Driven AI Chatbot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ── tokens ─────────────────────────────────────────────── */
+        :root {
+            --green:       #22c55e;
+            --green-dim:   #16a34a;
+            --green-glow:  rgba(34,197,94,0.3);
+            --bg:          #05070f;
+            --surface:     #0d1117;
+            --border:      #1f2937;
+            --border-hi:   #2d3748;
+            --text-1:      #e5e7eb;
+            --text-2:      #9ca3af;
+            --text-3:      #6b7280;
+            --radius:      12px;
+
+            /* gate timing — CSS vars so JS can read them */
+            --gate-delay:  1.6s;
+            --gate-dur:    1.5s;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: var(--bg);
+            font-family: 'Inter', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            color: var(--text-1);
+        }
+
+        /* ── stage ──────────────────────────────────────────────── */
+        #stage {
+            position: fixed; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        /* ── background ─────────────────────────────────────────── */
+        #bg-layer {
+            position: absolute; inset: 0; z-index: 0;
+            background: radial-gradient(circle at center, #1a2238 0%, #0b0f1a 60%, #05070f 100%);
+        }
+        #bg-layer::before {
+            content: '';
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(34,197,94,0.022) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34,197,94,0.022) 1px, transparent 1px);
+            background-size: 64px 64px;
+            mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 10%, transparent 70%);
+            -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 10%, transparent 70%);
+            animation: gridPulse 8s ease-in-out infinite alternate;
+        }
+        @keyframes gridPulse { from { opacity:.5 } to { opacity:1 } }
+
+        /* ── particles ──────────────────────────────────────────── */
+        #particle-canvas { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+
+        /* ── hero text (gate phase) ─────────────────────────────── */
+        #hero-text {
+            position: absolute; inset: 0; z-index: 2;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center; padding: 0 24px; gap: 12px;
+            opacity: 0;
+            animation: fadeUp .9s cubic-bezier(.22,1,.36,1) .3s forwards;
+            transition: opacity .45s ease, transform .45s ease;
+        }
+        #hero-text.exit { opacity: 0; transform: translateY(-16px); pointer-events: none; }
+
+        @keyframes fadeUp {
+            from { opacity:0; transform:translateY(12px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+
+        .hero-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--green);
+            opacity: .75;
+        }
+
+        .hero-title {
+            font-size: clamp(28px, 5.5vw, 68px);
+            font-weight: 700;
+            letter-spacing: -1.5px;
+            line-height: 1.08;
+            color: var(--text-1);
+        }
+        .hero-title span { color: var(--green); }
+
+        .hero-sub {
+            font-size: clamp(14px, 1.8vw, 18px);
+            font-weight: 400;
+            color: var(--text-2);
+            margin-top: 4px;
+        }
+
+        .progress-wrap {
+            width: clamp(120px, 22vw, 220px);
+            height: 2px;
+            background: rgba(255,255,255,.06);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+        .progress-bar {
+            height: 100%; width: 0%;
+            background: var(--green);
+            border-radius: 99px;
+            animation: progressFill 3.1s linear forwards;
+        }
+        @keyframes progressFill { from { width:0% } to { width:100% } }
+
+        /* ── gate panels ────────────────────────────────────────── */
+        #gate {
+            position: absolute; inset: 0; z-index: 10;
+            display: flex; pointer-events: none;
+        }
+
+        .gate-panel { flex: 1; position: relative; overflow: hidden; }
+
+        .gate-panel.left {
+            animation: openLeft var(--gate-dur) cubic-bezier(.76,0,.24,1) var(--gate-delay) forwards;
+        }
+        .gate-panel.right {
+            animation: openRight var(--gate-dur) cubic-bezier(.76,0,.24,1) var(--gate-delay) forwards;
+        }
+
+        @keyframes openLeft  { to { transform: translateX(-100%); } }
+        @keyframes openRight { to { transform: translateX(100%); } }
+
+        .gate-panel::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(180deg, #080e18 0%, #060c16 50%, #030810 100%);
+        }
+        .gate-panel.left::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, rgba(10,20,40,.95) 0%, rgba(6,14,28,.6) 70%, rgba(34,197,94,.03) 100%);
+        }
+        .gate-panel.right::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(270deg, rgba(10,20,40,.95) 0%, rgba(6,14,28,.6) 70%, rgba(34,197,94,.03) 100%);
+        }
+
+        /* scan lines */
+        .gate-inner { position: absolute; inset: 0; z-index: 1; }
+        .gate-inner::before {
+            content: ''; position: absolute; inset: 0;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(34,197,94,.015) 3px, rgba(34,197,94,.015) 4px);
+        }
+
+        /* glowing seam */
+        .gate-seam {
+            position: absolute; top:0; bottom:0; width: 2px; z-index: 2;
+            background: linear-gradient(180deg, transparent, var(--green) 25%, #86efac 50%, var(--green) 75%, transparent);
+            box-shadow: 0 0 10px 3px var(--green-glow), 0 0 28px 6px rgba(34,197,94,.1);
+            animation: seamPulse 1.4s ease-in-out infinite alternate;
+        }
+        .gate-panel.left  .gate-seam { right:0; }
+        .gate-panel.right .gate-seam { left:0;  }
+        @keyframes seamPulse {
+            from { opacity:.6; }
+            to   { opacity:1; box-shadow: 0 0 16px 5px var(--green-glow), 0 0 40px 10px rgba(34,197,94,.15); }
+        }
+
+        /* vertical traces */
+        .gate-traces { position: absolute; inset:0; z-index:1; overflow:hidden; }
+        .trace {
+            position: absolute; top:0; bottom:0; width:1px;
+            background: linear-gradient(180deg, transparent, rgba(34,197,94,.3) 40%, rgba(34,197,94,.5) 50%, rgba(34,197,94,.3) 60%, transparent);
+            animation: traceScan 3s ease-in-out infinite;
+        }
+        .trace:nth-child(1) { left:18%; animation-delay:.0s; opacity:.5; }
+        .trace:nth-child(2) { left:42%; animation-delay:.5s; opacity:.3; }
+        .trace:nth-child(3) { left:68%; animation-delay:1s;  opacity:.2; }
+        .trace:nth-child(4) { left:86%; animation-delay:1.5s;opacity:.15;}
+        @keyframes traceScan { 0%,100%{transform:scaleY(.2);opacity:0} 50%{transform:scaleY(1);opacity:1} }
+
+        /* horizontal bars */
+        .gate-bars {
+            position: absolute; inset:0; z-index:1;
+            display:flex; flex-direction:column; justify-content:space-between;
+            padding: 10% 0; pointer-events:none;
+        }
+        .gate-bar {
+            width:100%; height:1px;
+            background: linear-gradient(90deg, transparent, rgba(34,197,94,.1) 30%, rgba(34,197,94,.22) 50%, rgba(34,197,94,.1) 70%, transparent);
+        }
+
+        /* corner marks */
+        .gate-corner { position:absolute; width:24px; height:24px; z-index:3; }
+        .gate-corner::before, .gate-corner::after { content:''; position:absolute; background:var(--green); box-shadow:0 0 6px var(--green); }
+        .gate-corner::before { height:2px; width:100%; top:0; left:0; }
+        .gate-corner::after  { width:2px; height:100%; top:0; left:0; }
+        .corner-tl { top:14px; left:14px; }
+        .corner-tr { top:14px; right:14px; transform:rotate(90deg); }
+        .corner-bl { bottom:14px; left:14px; transform:rotate(-90deg); }
+        .corner-br { bottom:14px; right:14px; transform:rotate(180deg); }
+
+        /* badge */
+        #gate-badge {
+            position: absolute; top:50%; left:50%;
+            transform: translate(-50%,-50%);
+            z-index: 20;
+            width: clamp(52px,7vw,80px); height: clamp(52px,7vw,80px);
+            display: flex; align-items:center; justify-content:center;
+            background: #0c1f0e;
+            border: 1px solid rgba(34,197,94,.35);
+            border-radius: 12px;
+            box-shadow: 0 0 24px 6px rgba(34,197,94,.2);
+            transition: opacity .3s ease, transform .3s ease;
+        }
+        .badge-svg { width:44%; height:44%; color:var(--green); }
+
+        /* flash */
+        #flash {
+            position:fixed; inset:0; z-index:100;
+            background: radial-gradient(ellipse at center, rgba(34,197,94,.12) 0%, transparent 65%);
+            pointer-events:none; opacity:0;
+            animation: flashBurst .4s ease-out var(--gate-delay) forwards;
+        }
+        @keyframes flashBurst { 0%{opacity:0} 40%{opacity:1} 100%{opacity:0} }
+
+        /* ── selection dashboard ─────────────────────────────────── */
+        #dashboard {
+            position: absolute; inset:0; z-index:5;
+            display: flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            padding: 40px 24px;
+            padding-bottom: max(40px, env(safe-area-inset-bottom));
+            overflow-y: auto;
+            opacity:0; pointer-events:none;
+            transform: translateY(20px);
+            transition: opacity .6s ease, transform .6s ease;
+        }
+        #dashboard.visible { opacity:1; pointer-events:auto; transform:translateY(0); }
+
+        .dash-eyebrow {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--green);
+            opacity: .8;
+            margin-bottom: 16px;
+        }
+
+        .dash-title {
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 700;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            color: var(--text-1);
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .dash-sub {
+            font-size: clamp(14px, 2vw, 16px);
+            font-weight: 400;
+            color: var(--text-2);
+            line-height: 1.5;
+            max-width: 540px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: clamp(36px, 6vh, 56px);
+            text-align: center;
+        }
+
+        /* card grid */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .sel-card {
+            background: rgba(13, 17, 23, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 36px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: translateY(16px);
+            position: relative;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        }
+        .sel-card.c1 { animation: cardIn .5s ease .08s forwards; }
+        .sel-card.c2 { animation: cardIn .5s ease .18s forwards; }
+        @keyframes cardIn {
+            from { opacity:0; transform:translateY(16px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+
+        .sel-card:hover {
+            border-color: rgba(255, 255, 255, 0.18);
+            background: rgba(13, 17, 23, 0.85);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+            transform: translateY(-4px);
+        }
+        .sel-card.green:hover {
+            border-color: rgba(34, 197, 94, 0.3);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 20px rgba(34, 197, 94, 0.04);
+        }
+
+        .card-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items:center; justify-content:center;
+            font-size: 24px;
+            flex-shrink: 0;
+            margin-bottom: 4px;
+        }
+        .card-icon.green-icon {
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.18);
+        }
+        .card-icon.neutral-icon {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .card-name {
+            font-size: 18px; font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+        .card-desc {
+            font-size: 14px; font-weight: 400;
+            color: var(--text-2); line-height: 1.6;
+        }
+
+        .card-cta {
+            display: inline-flex; align-items:center; gap:6px;
+            margin-top: auto; /* Align CTA perfectly at the bottom of both cards */
+            font-size: 14px; font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            align-self: flex-start;
+        }
+        .card-cta.primary {
+            background: var(--green);
+            color: #052e16;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+        }
+        .card-cta.primary:hover {
+            background: var(--green-dim);
+            box-shadow: 0 6px 16px rgba(34, 197, 94, 0.25);
+            transform: translateX(2px);
+        }
+        .card-cta.secondary {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .card-cta.secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(2px);
+        }
+        .card-cta .arrow { transition: transform .15s ease; }
+        .card-cta:hover .arrow { transform: translateX(3px); }
+
+        /* ── responsive ─────────────────────────────────────────── */
+        @media (max-width: 768px) {
+            :root { --gate-delay: 1.4s; --gate-dur: 1.3s; }
+            #dashboard {
+                padding: 40px 24px;
+                justify-content: flex-start; /* scroll starts at top on small screens */
+            }
+            .dash-eyebrow { margin-top: 20px; }
+            .card-grid { grid-template-columns: 1fr; max-width: 440px; gap: 20px; }
+            .gate-corner { width:18px; height:18px; }
+            .corner-tl, .corner-bl { left:12px; }
+            .corner-tr, .corner-br { right:12px; }
+            .corner-bl, .corner-br { bottom:12px; }
+            .trace:nth-child(n+3) { display:none; }
+            .sel-card { padding: 28px 24px; gap: 16px; }
+        }
+        @media (max-width: 480px) {
+            .gate-corner { display:none; }
+            #dashboard { padding: 24px 16px; padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+            .dash-title { font-size: 28px; }
+            .dash-sub { margin-bottom: 32px; }
+            .card-grid { max-width: 100%; gap: 16px; }
+            .sel-card { padding: 24px 20px; }
+            .card-cta { width: 100%; justify-content: center; font-size: 13px; padding: 10px 16px; }
+        }
+        @media (max-width: 360px) {
+            .card-icon { width: 38px; height: 38px; font-size: 18px; }
+            .card-desc { font-size: 12px; }
+        }
+        @media (max-height: 500px) {
+            .gate-bars { display:none; }
+        }
+        @media (max-height: 600px) and (orientation: landscape) {
+            .card-grid { grid-template-columns: repeat(2,1fr); max-width:720px; }
+            #dashboard { padding:16px 20px; }
+            .dash-sub { margin-bottom:20px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration:.01ms !important;
+                transition-duration:.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="stage" role="main" aria-label="Memory Driven AI Chatbot — Welcome">
+
+    <div id="bg-layer" aria-hidden="true"></div>
+    <canvas id="particle-canvas" aria-hidden="true"></canvas>
+
+    <!-- hero text behind gate -->
+    <div id="hero-text" aria-hidden="true">
+        <span class="hero-label">Memory Driven AI</span>
+        <h1 class="hero-title">Welcome to Our<br><span>Project</span></h1>
+        <p class="hero-sub">Memory Driven AI Chatbot</p>
+        <div class="progress-wrap" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- gate -->
+    <div id="gate" aria-hidden="true">
+        <!-- left panel -->
+        <div class="gate-panel left">
+            <div class="gate-inner"></div>
+            <div class="gate-traces">
+                <div class="trace"></div>
+                <div class="trace"></div>
+                <div class="trace"></div>
+                <div class="trace"></div>
+            </div>
+            <div class="gate-bars">
+                <div class="gate-bar"></div><div class="gate-bar"></div>
+                <div class="gate-bar"></div><div class="gate-bar"></div>
+                <div class="gate-bar"></div><div class="gate-bar"></div>
+            </div>
+            <div class="gate-corner corner-tl"></div>
+            <div class="gate-corner corner-bl"></div>
+            <div class="gate-seam"></div>
+        </div>
+        <!-- right panel -->
+        <div class="gate-panel right">
+            <div class="gate-inner"></div>
+            <div class="gate-traces">
+                <div class="trace"></div>
+                <div class="trace"></div>
+                <div class="trace"></div>
+                <div class="trace"></div>
+            </div>
+            <div class="gate-bars">
+                <div class="gate-bar"></div><div class="gate-bar"></div>
+                <div class="gate-bar"></div><div class="gate-bar"></div>
+                <div class="gate-bar"></div><div class="gate-bar"></div>
+            </div>
+            <div class="gate-corner corner-tr"></div>
+            <div class="gate-corner corner-br"></div>
+            <div class="gate-seam"></div>
+        </div>
+    </div>
+
+    <!-- badge -->
+    <div id="gate-badge" aria-hidden="true">
+        <svg class="badge-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 0 6h-1v1a4 4 0 0 1-8 0v-1H7a3 3 0 0 1 0-6h1V6a4 4 0 0 1 4-4z"/>
+        </svg>
+    </div>
+
+    <div id="flash" aria-hidden="true"></div>
+
+    <!-- ── selection dashboard ── -->
+    <section id="dashboard" role="region" aria-label="Choose your destination">
+
+        <p class="dash-eyebrow">Choose your destination</p>
+        <h1 class="dash-title">Where would you<br>like to go?</h1>
+        <p class="dash-sub">Memory Driven AI Chatbot</p>
+
+        <div class="card-grid">
+
+            <!-- card 1: chatbot -->
+            <a href="index.html" class="sel-card green c1" id="card-chatbot" aria-label="Open AI Chatbot">
+                <div class="card-icon green-icon" aria-hidden="true">🤖</div>
+                <div>
+                    <p class="card-name">AI Chatbot</p>
+                    <p class="card-desc">Experience our Memory Driven Conversational AI Assistant.</p>
+                </div>
+                <span class="card-cta primary">
+                    Open Chatbot <span class="arrow" aria-hidden="true">→</span>
+                </span>
+            </a>
+
+            <!-- card 2: team -->
+            <a href="team.html" class="sel-card c2" id="card-team" aria-label="Meet the team">
+                <div class="card-icon neutral-icon" aria-hidden="true">👥</div>
+                <div>
+                    <p class="card-name">Meet Our Team</p>
+                    <p class="card-desc">Explore the team behind the development of the Memory Driven AI Project.</p>
+                </div>
+                <span class="card-cta secondary">
+                    View Team <span class="arrow" aria-hidden="true">→</span>
+                </span>
+            </a>
+
+        </div>
+    </section>
+
+</div>
+
+<script>
+'use strict';
+
+/* ── particles ─────────────────────────────────────── */
+(function () {
+    const canvas = document.getElementById('particle-canvas');
+    const ctx    = canvas.getContext('2d');
+    let W, H, pts, raf;
+    const G = [34, 197, 94];
+
+    function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+
+    function mk() {
+        return {
+            x: Math.random() * W, y: Math.random() * H,
+            r: .4 + Math.random() * 1.4,
+            vx: (Math.random() - .5) * .15,
+            vy: -.06 - Math.random() * .14,
+            a: .1 + Math.random() * .55,
+            da: .003 + Math.random() * .009, ds: 1
+        };
+    }
+
+    function init() {
+        resize();
+        const n = innerWidth < 600 ? 25 : 55;
+        pts = Array.from({ length: n }, mk);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+        for (const p of pts) {
+            p.a += p.da * p.ds;
+            if (p.a > .65 || p.a < .06) p.ds *= -1;
+            p.x += p.vx; p.y += p.vy;
+            if (p.x < 0) p.x = W; if (p.x > W) p.x = 0; if (p.y < 0) p.y = H;
+            const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
+            g.addColorStop(0,   `rgba(${G},${p.a})`);
+            g.addColorStop(.5,  `rgba(${G},${p.a * .35})`);
+            g.addColorStop(1,   `rgba(${G},0)`);
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2);
+            ctx.fillStyle = g; ctx.fill();
+        }
+        raf = requestAnimationFrame(draw);
+    }
+
+    let rt;
+    addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(init, 150); });
+    init(); draw();
+})();
+
+/* ── animation controller ──────────────────────────── */
+(function () {
+    const badge     = document.getElementById('gate-badge');
+    const heroText  = document.getElementById('hero-text');
+    const dashboard = document.getElementById('dashboard');
+
+    const root = getComputedStyle(document.documentElement);
+    const gateDelay = parseFloat(root.getPropertyValue('--gate-delay')) * 1000 || 1600;
+    const gateDur   = parseFloat(root.getPropertyValue('--gate-dur'))   * 1000 || 1500;
+    const dashAfter = gateDelay + gateDur + 180;
+
+    const prefRed = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefRed) {
+        heroText.classList.add('exit');
+        badge.style.opacity = '0';
+        dashboard.classList.add('visible');
+        return;
+    }
+
+    // fade badge out when gate starts opening
+    setTimeout(() => {
+        badge.style.opacity = '0';
+        badge.style.transform = 'translate(-50%,-50%) scale(.85)';
+    }, gateDelay);
+
+    // show dashboard after gate finishes
+    setTimeout(() => {
+        heroText.classList.add('exit');
+        setTimeout(() => {
+            heroText.style.display = 'none';
+            dashboard.classList.add('visible');
+        }, 450);
+    }, dashAfter);
+})();
+</script>
+</body>
+</html>
