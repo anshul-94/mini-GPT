@@ -1,17 +1,112 @@
-# 🧠 AI Chatbot Backend
+# 🧠 Memory-Driven Conversational AI
 
-A lightweight, high-performance, and robust backend for an AI Chatbot. Built with Python, FastAPI, and Uvicorn, it integrates with the OpenRouter API to fetch responses using the `openai/gpt-oss-20b:free` model (or any model of your choice).
+A lightweight conversational AI system designed to maintain context across interactions and provide more personalized responses through memory-aware conversation handling.
 
-This backend is designed to work seamlessly with the pure HTML/CSS/JS frontend included in `index.html`.
+The chatbot combines short-term conversational context with intelligent memory management to create a more natural and human-like chat experience.
+
+---
+
+## 🚀 Project Overview
+
+Traditional chatbots often lose context as conversations grow longer.
+
+This project introduces a memory-driven approach where the assistant can:
+
+* Remember recent conversations
+* Maintain conversational context
+* Generate personalized responses
+* Improve continuity across interactions
+* Simulate more natural human-like conversations
+
+The system is designed as a foundation for advanced AI assistants and future agent-based workflows.
+
+---
+
+## ✨ Features
+
+### Short-Term Memory (STM)
+
+* Maintains recent conversation history
+* Preserves context during active chats
+* Supports multi-turn interactions
+
+### Context-Aware Responses
+
+* Understands ongoing discussions
+* Produces more relevant answers
+* Reduces repetitive responses
+
+### Session-Based Conversations
+
+* Separate conversation sessions
+* Independent chat histories
+* Improved user experience
+
+### Responsive User Interface
+
+* Mobile-friendly design
+* Modern chatbot interface
+* Real-time messaging experience
+
+### OpenRouter Integration
+
+* Supports modern LLMs
+* Easy model switching
+* Flexible AI backend
+
+---
+
+## 🏗️ System Workflow
+
+```text
+User Message
+      ↓
+Conversation Context Retrieval
+      ↓
+Short-Term Memory Processing
+      ↓
+Prompt Construction
+      ↓
+LLM Response Generation
+      ↓
+Response Delivery
+      ↓
+Memory Update
+```
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Framework:** [FastAPI](https://fastapi.tiangolo.com/) - Modern, fast (high-performance) web framework for building APIs.
-- **HTTP Client:** [Requests](https://requests.readthedocs.io/) - Synchronous HTTP library for Python to connect to the OpenRouter API.
-- **ASGI Server:** [Uvicorn](https://www.uvicorn.org/) - Lightning-fast ASGI server implementation.
-- **Configuration:** [python-dotenv](https://github.com/theofidry/django-dotenv) - Reads key-value pairs from a `.env` file and sets them as environment variables.
+### Frontend
+
+* HTML
+* CSS
+* JavaScript
+
+### Backend
+
+* Python
+* FastAPI
+* Uvicorn
+
+### AI Layer
+
+* OpenRouter API
+* LangChain
+* Prompt Engineering
+* Conversational AI
+
+### Database (Planned / Future Scope)
+
+* PostgreSQL
+
+### AI Concepts
+
+* NLP
+* Context Management
+* Memory Systems
+* Retrieval-Augmented Generation (RAG)
 
 ---
 
@@ -20,115 +115,101 @@ This backend is designed to work seamlessly with the pure HTML/CSS/JS frontend i
 ```text
 project/
 │
-├── main.py              # Main FastAPI application with routes and error handling
-├── requirements.txt     # Python packages and version requirements
-├── .env                 # Environment secrets (API Keys, config) - ignored by git
-├── .env.example         # Template for environment secrets
-└── README.md            # Installation and setup documentation (this file)
+├── main.py
+├── chat.py
+├── index.html
+├── requirements.txt
+├── README.md
+└── .env
 ```
 
 ---
 
-## ⚙️ Installation & Setup
+## ⚙️ Installation
 
-Follow these steps to set up and run the backend locally:
+### Clone Repository
 
-### 1. Prerequisites
-Ensure you have **Python 3.8+** installed. You can check your Python version with:
 ```bash
-python --version
+git clone https://github.com/anshul-94/mini-GPT.git
+cd mini-GPT
 ```
 
-### 2. Create a Virtual Environment (Recommended)
-It is recommended to run the project inside a virtual environment to avoid package conflicts:
+### Create Virtual Environment
+
 ```bash
-# Create virtual environment
 python -m venv venv
-
-# Activate virtual environment
-# On macOS/Linux:
-source venv/bin/activate
-# On Windows (cmd):
-# venv\Scripts\activate.bat
-# On Windows (PowerShell):
-# .\venv\Scripts\Activate.ps1
 ```
 
-### 3. Install Dependencies
-Install all required packages listed in `requirements.txt`:
+Activate:
+
+**Mac/Linux**
+
+```bash
+source venv/bin/activate
+```
+
+**Windows**
+
+```bash
+venv\Scripts\activate
+```
+
+---
+
+### Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configuration
-1. Copy the template `.env.example` file to create your `.env` configuration file:
-   ```bash
-   cp .env.example .env
-   ```
-2. Open the newly created `.env` file and replace `YOUR_OPENROUTER_API_KEY_HERE` with your actual OpenRouter API key:
-   ```env
-   OPENROUTER_API_KEY=sk-or-v1-...
-   ```
-   > 💡 You can obtain your API key from [OpenRouter Keys Dashboard](https://openrouter.ai/keys).
+---
 
-### 5. Running the Backend Server
-Start the Uvicorn development server with hot-reload enabled:
+## 🔑 Environment Variables
+
+Create a `.env` file:
+
+```env
+OPENROUTER_API_KEY=your_api_key_here
+```
+
+Optional:
+
+```env
+OPENROUTER_MODEL=meta-llama/llama-3-8b-instruct
+```
+
+---
+
+## ▶️ Running the Project
+
+Start the FastAPI server:
+
 ```bash
 uvicorn main:app --reload
 ```
-The server will start at **`http://127.0.0.1:8000`**. You can verify the health by navigating to `http://127.0.0.1:8000/health` in your browser.
+
+Server will start at:
+
+```text
+http://127.0.0.1:8000
+```
+
+Open the URL in your browser and start chatting.
 
 ---
 
-## 🔌 API Documentation
+## 🔮 Future Improvements
 
-### **POST** `/chat`
-Sends a prompt message to the backend, which forwards it to OpenRouter and returns the AI reply.
-
-* **Headers:**
-  `Content-Type: application/json`
-
-* **Request Body:**
-  ```json
-  {
-    "message": "Hello, how are you?",
-    "session_id": "abc123"
-  }
-  ```
-
-* **Successful Response (200 OK):**
-  ```json
-  {
-    "reply": "Hello! I am doing well, thank you. How can I help you today?"
-  }
-  ```
-
-* **Error Response Example (400 Bad Request):**
-  ```json
-  {
-    "reply": "Error: Message cannot be empty."
-  }
-  ```
-
-* **CORS Configured:**
-  Cross-Origin Resource Sharing (CORS) is enabled (`allow_origins=["*"]`) so that `index.html` can call the endpoint directly when run locally from the browser.
+* Long-Term Memory
+* Vector Database Integration
+* User Profiles
+* AI Agents
+* Web Search Tools
+* File Analysis
+* Memory Summarization
+* Multi-User Support
 
 ---
+## 📌 Project Goal
 
-## 🤖 Changing the AI Model
-To switch to a different AI model (including newer or paid models):
-1. Open your `.env` file.
-2. Edit the `OPENROUTER_MODEL` variable. For example, to use Meta Llama 3:
-   ```env
-   OPENROUTER_MODEL=meta-llama/llama-3-8b-instruct:free
-   ```
-3. Save the file. The server will automatically reload and use the new model on subsequent chat requests!
-
----
-
-## 🎨 Testing the Full Application
-
-1. Make sure your FastAPI backend is running on `http://127.0.0.1:8000`.
-2. Open the `index.html` file in any modern web browser.
-3. Type a message in the input box at the bottom and press **Enter** or click the send button.
-4. You will see a loading indicator `"AI is thinking..."` and receive the streaming response shortly.
+Build a conversational AI system that not only responds to messages but also remembers context, understands conversations, and provides a more intelligent user experience.

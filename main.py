@@ -15,9 +15,8 @@ app = FastAPI(title="AI Chatbot Backend", version="1.0.0")
 
 # Absolute path configuration for HTML files
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-LANDING_PATH = os.path.join(BASE_DIR, "landing.html")
 INDEX_PATH = os.path.join(BASE_DIR, "index.html")
-TEAM_PATH = os.path.join(BASE_DIR, "team.html")
+
 
 # CORS middleware configuration to permit local files and cross-origin access
 app.add_middleware(
@@ -63,16 +62,9 @@ def serve_html_file(file_path: str, name: str):
         )
 
 @app.get("/", response_class=HTMLResponse)
-async def serve_landing():
-    return serve_html_file(LANDING_PATH, "landing.html")
-
-@app.get("/chatbot", response_class=HTMLResponse)
 async def serve_chatbot():
     return serve_html_file(INDEX_PATH, "index.html")
 
-@app.get("/team", response_class=HTMLResponse)
-async def serve_team():
-    return serve_html_file(TEAM_PATH, "team.html")
 
 @app.post("/chat")
 async def chat_endpoint(data: ChatRequest):
