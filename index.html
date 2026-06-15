@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>AI Assistant</title>
+    <title>RAG AI Assistant — Upload & Ask</title>
+    <meta name="description" content="Multi-Modal RAG AI Assistant. Upload PDFs, CSVs, Excel, WhatsApp chats, images and ask questions about them.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -735,6 +736,229 @@
                 max-width: calc(100vw - 80px);
             }
         }
+
+        /* ============================================================
+           RAG UPLOAD UI STYLES
+        ============================================================ */
+
+        /* ── Upload button (paperclip) inside input bar ── */
+        #upload-btn {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: var(--transition);
+            touch-action: manipulation;
+        }
+        #upload-btn:hover { background-color: rgba(34,197,94,0.12); color: var(--accent); }
+        #upload-btn.has-files { color: var(--accent); }
+
+        /* ── File badges strip (shown above input bar when files are loaded) ── */
+        #file-badges {
+            display: none;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto 8px auto;
+            display: none;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0 2px;
+        }
+        #file-badges.visible { display: flex; }
+
+        .file-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(34,197,94,0.12);
+            border: 1px solid rgba(34,197,94,0.3);
+            border-radius: 20px;
+            padding: 4px 10px 4px 8px;
+            font-size: 12px;
+            color: #86efac;
+            max-width: 200px;
+            animation: badgeIn 0.25s ease;
+        }
+        @keyframes badgeIn {
+            from { opacity: 0; transform: scale(0.85); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        .file-badge-icon { font-size: 14px; }
+        .file-badge-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 130px;
+        }
+
+        /* ── Upload progress bar ── */
+        #upload-status {
+            display: none;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto 8px auto;
+            background: rgba(34,197,94,0.08);
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            align-items: center;
+            gap: 10px;
+        }
+        #upload-status.visible { display: flex; }
+        .upload-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(34,197,94,0.3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Analytics panel ── */
+        #analytics-panel {
+            display: none;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        #analytics-panel.visible { display: block; }
+
+        .analytics-card {
+            background: linear-gradient(135deg, rgba(34,197,94,0.06) 0%, rgba(15,23,42,0.8) 100%);
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: var(--radius-lg);
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            animation: fadeIn 0.4s ease;
+        }
+        .analytics-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .analytics-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .analytics-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+        .analytics-close:hover { color: var(--text-primary); background: rgba(255,255,255,0.08); }
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        .analytics-stat {
+            background: rgba(255,255,255,0.04);
+            border-radius: 8px;
+            padding: 10px 12px;
+            text-align: center;
+        }
+        .analytics-stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        .analytics-stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+        .analytics-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        .analytics-table th {
+            text-align: left;
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            font-weight: 500;
+            border-bottom: 1px solid var(--bubble-border);
+        }
+        .analytics-table td {
+            padding: 4px 8px;
+            color: var(--text-primary);
+            border-bottom: 1px solid rgba(31,41,55,0.5);
+        }
+        .analytics-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .analytics-chip {
+            background: rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 3px 10px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .analytics-chip span { color: var(--text-primary); font-weight: 600; }
+
+        /* ── Drag-and-drop overlay ── */
+        #drop-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(34,197,94,0.08);
+            border: 2px dashed rgba(34,197,94,0.5);
+            border-radius: 12px;
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        }
+        #drop-overlay.active {
+            display: flex;
+            pointer-events: auto;
+        }
+        .drop-icon { font-size: 40px; }
+        .drop-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .drop-sub {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* ── Mobile analytics adjustments ── */
+        @media (max-width: 768px) {
+            #analytics-panel { padding: 0 12px; }
+            .analytics-grid { grid-template-columns: repeat(2, 1fr); }
+        }
     </style>
 </head>
 <body>
@@ -771,11 +995,36 @@
         <div id="chat-container">
             <div id="messages"></div>
             <div id="typing">AI is thinking...</div>
+            <!-- Analytics panel (shown after structured file upload) -->
+            <div id="analytics-panel"></div>
         </div>
 
+        <!-- Drag-and-drop overlay (absolute-positioned over main-content) -->
+        <div id="drop-overlay" role="presentation" aria-hidden="true">
+            <div class="drop-icon">📂</div>
+            <div class="drop-text">Drop your file here</div>
+            <div class="drop-sub">PDF · CSV · Excel · DOCX · TXT · WhatsApp · Image</div>
+        </div>
+
+        <!-- Hidden file input -->
+        <input type="file" id="file-input" style="display:none"
+            accept=".pdf,.csv,.xlsx,.xls,.txt,.docx,.png,.jpg,.jpeg,.gif,.bmp,.webp,.tiff">
+
         <div id="input-area">
+            <!-- Upload status bar -->
+            <div id="upload-status">
+                <div class="upload-spinner"></div>
+                <span id="upload-status-text">Uploading and indexing file...</span>
+            </div>
+            <!-- File badges -->
+            <div id="file-badges"></div>
+
             <div class="input-container">
-                <textarea id="user-input" rows="1" placeholder="Ask anything..." autocomplete="off" autocorrect="off" spellcheck="true"></textarea>
+                <!-- Paperclip upload button -->
+                <button id="upload-btn" aria-label="Upload file" title="Upload PDF, CSV, Excel, DOCX, Image, WhatsApp chat...">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke-width="2"/></svg>
+                </button>
+                <textarea id="user-input" rows="1" placeholder="Ask anything, or upload a file first..." autocomplete="off" autocorrect="off" spellcheck="true"></textarea>
                 <button id="send-btn" aria-label="Send message">
                     <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
                 </button>
@@ -800,7 +1049,15 @@
             input: $('user-input'),
             sendBtn: $('send-btn'),
             newBtn: $('new-chat-btn'),
-            typing: $('typing')
+            typing: $('typing'),
+            // RAG upload UI elements
+            uploadBtn: $('upload-btn'),
+            fileInput: $('file-input'),
+            fileBadges: $('file-badges'),
+            uploadStatus: $('upload-status'),
+            uploadStatusText: $('upload-status-text'),
+            analyticsPanel: $('analytics-panel'),
+            dropOverlay: $('drop-overlay')
         };
 
         /* --- UTILS --- */
@@ -1187,6 +1444,320 @@
                 }
             });
         }
+
+        /* ─────────────────────────────────────────────────────────────────
+           RAG FILE UPLOAD — COMPLETE IMPLEMENTATION
+        ───────────────────────────────────────────────────────────────── */
+
+        // File type icon mapping
+        const FILE_ICONS = {
+            'pdf': '📄', 'csv': '📊', 'xlsx': '📊', 'xls': '📊',
+            'txt': '📝', 'docx': '📝', 'doc': '📝',
+            'png': '🖼️', 'jpg': '🖼️', 'jpeg': '🖼️',
+            'gif': '🖼️', 'bmp': '🖼️', 'webp': '🖼️', 'tiff': '🖼️'
+        };
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            return FILE_ICONS[ext] || '📎';
+        }
+
+        function getUploadApiUrl() {
+            const origin = window.location.origin;
+            if (origin && origin !== 'null' && window.location.protocol.startsWith('http')) {
+                return `${origin}/upload`;
+            }
+            return 'http://localhost:8000/upload';
+        }
+
+        // Set upload button loading state
+        function setUploadLoading(loading, statusText = 'Uploading and indexing file...') {
+            if (loading) {
+                D.uploadBtn.disabled = true;
+                D.uploadBtn.style.opacity = '0.4';
+                D.uploadStatus.classList.add('visible');
+                D.uploadStatusText.textContent = statusText;
+            } else {
+                D.uploadBtn.disabled = false;
+                D.uploadBtn.style.opacity = '';
+                D.uploadStatus.classList.remove('visible');
+            }
+        }
+
+        // Add a file badge to the strip
+        function addFileBadge(filename) {
+            const badge = document.createElement('div');
+            badge.className = 'file-badge';
+            badge.title = filename;
+            const icon = document.createElement('span');
+            icon.className = 'file-badge-icon';
+            icon.textContent = getFileIcon(filename);
+            const name = document.createElement('span');
+            name.className = 'file-badge-name';
+            name.textContent = filename;
+            badge.appendChild(icon);
+            badge.appendChild(name);
+            D.fileBadges.appendChild(badge);
+            D.fileBadges.classList.add('visible');
+            D.uploadBtn.classList.add('has-files');
+        }
+
+        // Render analytics panel from API response
+        function renderAnalytics(analytics, fileName) {
+            if (!analytics || Object.keys(analytics).length === 0) {
+                return;
+            }
+
+            const type = analytics.type;
+            const card = document.createElement('div');
+            card.className = 'analytics-card';
+            card.id = `analytics-${Date.now()}`;
+
+            let headerIcon = '📊';
+            let headerTitle = 'File Analytics';
+            if (type === 'whatsapp') { headerIcon = '💬'; headerTitle = 'WhatsApp Chat Analytics'; }
+            else if (type === 'excel') { headerIcon = '📊'; headerTitle = 'Excel Analytics'; }
+            else if (type === 'tabular') { headerIcon = '📊'; headerTitle = 'CSV Analytics'; }
+
+            card.innerHTML = `
+                <div class="analytics-header">
+                    <div class="analytics-title">${headerIcon} ${headerTitle} — ${fileName}</div>
+                    <button class="analytics-close" onclick="this.closest('.analytics-card').remove()" title="Dismiss">×</button>
+                </div>
+                <div class="analytics-body"></div>
+            `;
+
+            const body = card.querySelector('.analytics-body');
+
+            if (type === 'whatsapp') {
+                const msgs = analytics.total_messages || 0;
+                const participants = analytics.participants || [];
+                const mostActive = analytics.most_active || ['N/A', 0];
+                const keywordCounts = analytics.keyword_counts || {};
+                const topEmojis = analytics.top_emojis || [];
+                const topWords = analytics.top_words || [];
+
+                body.innerHTML = `
+                    <div class="analytics-grid">
+                        <div class="analytics-stat">
+                            <div class="analytics-stat-value">${msgs.toLocaleString()}</div>
+                            <div class="analytics-stat-label">Total Messages</div>
+                        </div>
+                        <div class="analytics-stat">
+                            <div class="analytics-stat-value">${participants.length}</div>
+                            <div class="analytics-stat-label">Participants</div>
+                        </div>
+                        <div class="analytics-stat">
+                            <div class="analytics-stat-value" style="font-size:14px">${mostActive[0]}</div>
+                            <div class="analytics-stat-label">Most Active (${mostActive[1]} msgs)</div>
+                        </div>
+                        <div class="analytics-stat">
+                            <div class="analytics-stat-value">${keywordCounts['sorry'] || 0}</div>
+                            <div class="analytics-stat-label">"sorry" said</div>
+                        </div>
+                    </div>
+                    ${topWords.length ? `
+                    <div style="margin-top:12px;font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Top Words</div>
+                    <div class="analytics-chips">
+                        ${topWords.slice(0,8).map(([w,c]) => `<div class="analytics-chip">${w} <span>${c}</span></div>`).join('')}
+                    </div>` : ''}
+                    ${topEmojis.length ? `
+                    <div style="margin-top:10px;font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Top Emojis</div>
+                    <div class="analytics-chips">
+                        ${topEmojis.slice(0,6).map(([e,c]) => `<div class="analytics-chip">${e} <span>${c}</span></div>`).join('')}
+                    </div>` : ''}
+                `;
+            } else if (type === 'tabular' || type === 'excel') {
+                const rows = analytics.total_rows || analytics.rows || 0;
+                const cols = analytics.columns || [];
+                const numStats = analytics.numeric_stats || {};
+                const sheetNames = analytics.sheet_names || [];
+
+                const statsRows = Object.entries(numStats).slice(0, 6).map(([col, s]) =>
+                    `<tr><td>${col}</td><td>${s.min != null ? s.min.toFixed(1) : '-'}</td><td>${s.max != null ? s.max.toFixed(1) : '-'}</td><td>${s.mean != null ? s.mean.toFixed(1) : '-'}</td><td>${s.sum != null ? s.sum.toFixed(0) : '-'}</td></tr>`
+                ).join('');
+
+                body.innerHTML = `
+                    <div class="analytics-grid">
+                        <div class="analytics-stat">
+                            <div class="analytics-stat-value">${rows.toLocaleString()}</div>
+                            <div class="analytics-stat-label">Rows</div>
+                        </div>
+                        <div class="analytics-stat">
+                            <div class="analytics-stat-value">${cols.length}</div>
+                            <div class="analytics-stat-label">Columns</div>
+                        </div>
+                        ${sheetNames.length > 1 ? `<div class="analytics-stat"><div class="analytics-stat-value">${sheetNames.length}</div><div class="analytics-stat-label">Sheets</div></div>` : ''}
+                    </div>
+                    <div style="margin-top:10px;font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Columns: ${cols.slice(0,8).join(', ')}${cols.length > 8 ? '...' : ''}</div>
+                    ${statsRows ? `
+                    <table class="analytics-table">
+                        <thead><tr><th>Column</th><th>Min</th><th>Max</th><th>Avg</th><th>Sum</th></tr></thead>
+                        <tbody>${statsRows}</tbody>
+                    </table>` : ''}
+                `;
+            } else {
+                body.innerHTML = `<div style="color:var(--text-secondary);font-size:13px;">File indexed. Ask your questions below.</div>`;
+            }
+
+            D.analyticsPanel.appendChild(card);
+            D.analyticsPanel.classList.add('visible');
+
+            // Show chat container if welcome screen was showing
+            D.welcome.style.display = 'none';
+            D.chatContainer.style.display = 'block';
+            scrollBottom();
+        }
+
+        // Core upload function
+        async function uploadFile(file) {
+            const sess = S.sessions.find(s => s.id === S.activeId);
+            if (!sess) return;
+
+            const MAX_SIZE = 50 * 1024 * 1024;
+            if (file.size > MAX_SIZE) {
+                appendSystemMessage(`❌ File too large: ${file.name} (${(file.size/1024/1024).toFixed(1)} MB). Maximum is 50 MB.`);
+                return;
+            }
+
+            const allowedExts = ['pdf','csv','xlsx','xls','txt','docx','png','jpg','jpeg','gif','bmp','webp','tiff'];
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!allowedExts.includes(ext)) {
+                appendSystemMessage(`❌ Unsupported file type: .${ext}`);
+                return;
+            }
+
+            setUploadLoading(true, `Processing ${file.name}...`);
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('session_id', sess.id);
+
+                const response = await fetch(getUploadApiUrl(), {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || `Upload failed (${response.status})`);
+                }
+
+                // Show file badge
+                addFileBadge(file.name);
+
+                // Show analytics panel
+                if (data.analytics) {
+                    renderAnalytics(data.analytics, file.name);
+                }
+
+                // Show success message in chat
+                appendSystemMessage(
+                    `✅ **${file.name}** uploaded successfully!\n` +
+                    `Type: ${data.file_type} · Chunks indexed: ${data.chunks_indexed}\n` +
+                    `You can now ask questions about this file.`
+                );
+
+                // Update session title if first message
+                if (sess.messages.length <= 1) {
+                    sess.title = `📎 ${file.name}`;
+                    renderHistory();
+                    const headerTitle = document.querySelector('.header-title');
+                    if (headerTitle) headerTitle.textContent = sess.title;
+                }
+
+            } catch (err) {
+                appendSystemMessage(`❌ Upload failed: ${err.message}`);
+            } finally {
+                setUploadLoading(false);
+                D.fileInput.value = '';
+            }
+        }
+
+        // Append a system/status message to chat (not a user or bot message)
+        function appendSystemMessage(text) {
+            const sess = S.sessions.find(s => s.id === S.activeId);
+            if (!sess) return;
+
+            D.welcome.style.display = 'none';
+            D.chatContainer.style.display = 'block';
+
+            const msgRow = document.createElement('div');
+            msgRow.className = 'message bot';
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            avatar.textContent = 'AI';
+            const content = document.createElement('div');
+            content.className = 'msg-content';
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.style.borderColor = 'rgba(34,197,94,0.3)';
+            bubble.style.backgroundColor = 'rgba(34,197,94,0.05)';
+
+            // Convert simple **bold** and \n to HTML
+            const formatted = text
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#86efac">$1</strong>')
+                .replace(/\n/g, '<br>');
+            bubble.innerHTML = formatted;
+
+            content.appendChild(bubble);
+            msgRow.appendChild(avatar);
+            msgRow.appendChild(content);
+            D.messages.appendChild(msgRow);
+
+            const botMsg = { role: 'bot', content: text };
+            sess.messages.push(botMsg);
+            scrollBottom();
+        }
+
+        /* ── Upload event listeners ── */
+
+        // Paperclip button → open file picker
+        D.uploadBtn.onclick = (e) => {
+            e.preventDefault();
+            D.fileInput.click();
+        };
+
+        // File selected via picker
+        D.fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) uploadFile(file);
+        };
+
+        /* ── Drag-and-drop ── */
+        let dragCounter = 0;
+        const mainContent = document.getElementById('main-content');
+
+        mainContent.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            dragCounter++;
+            if (dragCounter === 1) D.dropOverlay.classList.add('active');
+        });
+
+        mainContent.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dragCounter--;
+            if (dragCounter <= 0) {
+                dragCounter = 0;
+                D.dropOverlay.classList.remove('active');
+            }
+        });
+
+        mainContent.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+
+        mainContent.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragCounter = 0;
+            D.dropOverlay.classList.remove('active');
+            const file = e.dataTransfer.files[0];
+            if (file) uploadFile(file);
+        });
 
         /* --- INIT --- */
         newSession();
