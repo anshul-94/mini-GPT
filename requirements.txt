@@ -1,4 +1,30 @@
+# ── Existing ──────────────────────────────────────────────────────────────────
 fastapi
 uvicorn
 openai
 python-dotenv
+
+# ── RAG Core ──────────────────────────────────────────────────────────────────
+langchain
+langchain-community
+langchain-huggingface
+
+# ── Vector Database ───────────────────────────────────────────────────────────
+faiss-cpu
+
+# ── Document Loaders ──────────────────────────────────────────────────────────
+pypdf
+docx2txt
+openpyxl
+xlrd
+pandas
+
+# ── OCR (Images) ──────────────────────────────────────────────────────────────
+pytesseract
+Pillow
+
+# ── Embeddings ────────────────────────────────────────────────────────────────
+sentence-transformers
+
+# ── FastAPI File Uploads ───────────────────────────────────────────────────────
+python-multipart
