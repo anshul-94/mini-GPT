@@ -150,8 +150,8 @@ def load_image_ocr(file_path: str) -> List[Document]:
         raise
 
 
-def load_whatsapp(file_path: str) -> Tuple[List[Document], Dict[str, Any]]:
-    """Load WhatsApp chat file: parse messages, compute analytics, return docs."""
+def load_whatsapp(file_path: str) -> Tuple[List[Document], Dict[str, Any], List[Dict]]:
+    """Load WhatsApp chat file: parse messages, compute analytics, return docs + raw messages."""
     from rag.whatsapp import parse_messages, compute_analytics, analytics_to_text, messages_to_documents, is_whatsapp_file
 
     with open(file_path, "r", encoding="utf-8", errors="replace") as f:
@@ -159,7 +159,8 @@ def load_whatsapp(file_path: str) -> Tuple[List[Document], Dict[str, Any]]:
 
     if not is_whatsapp_file(text):
         logger.warning(f"{file_path} does not appear to be a WhatsApp export. Loading as plain text.")
-        return load_text(file_path), {}
+        plain_docs = load_text(file_path)
+        return plain_docs, {}, []
 
     messages = parse_messages(text)
     analytics = compute_analytics(messages)
@@ -171,15 +172,16 @@ def load_whatsapp(file_path: str) -> Tuple[List[Document], Dict[str, Any]]:
     ]
 
     logger.info(f"WhatsApp loaded: {len(messages)} messages → {len(docs)} doc chunks")
-    return docs, analytics
+    return docs, analytics, messages  # <— raw messages returned as 3rd element
 
 
 # ── Main entry point ───────────────────────────────────────────────────────────
 
-def load_file(file_path: str) -> Tuple[List[Document], Dict[str, Any]]:
+def load_file(file_path: str) -> Tuple[List[Document], Dict[str, Any], List[Dict]]:
     """
     Detect file type and load it.
-    Returns: (list of Documents, analytics dict — may be empty for non-structured files)
+    Returns: (list of Documents, analytics dict, raw_messages list)
+    raw_messages is only populated for WhatsApp files; empty list otherwise.
     """
     path = Path(file_path)
     ext = path.suffix.lower()
@@ -188,6 +190,7 @@ def load_file(file_path: str) -> Tuple[List[Document], Dict[str, Any]]:
         raise ValueError(f"Unsupported file type: '{ext}'. Supported: {SUPPORTED_EXTENSIONS}")
 
     analytics: Dict[str, Any] = {}
+    raw_messages: List[Dict] = []
 
     # WhatsApp detection: .txt files checked first
     if ext == ".txt":
@@ -195,31 +198,31 @@ def load_file(file_path: str) -> Tuple[List[Document], Dict[str, Any]]:
             preview = f.read(3000)
         from rag.whatsapp import is_whatsapp_file
         if is_whatsapp_file(preview):
-            docs, analytics = load_whatsapp(file_path)
-            return docs, analytics
+            docs, analytics, raw_messages = load_whatsapp(file_path)
+            return docs, analytics, raw_messages
         else:
             docs = load_text(file_path)
-            return docs, analytics
+            return docs, analytics, raw_messages
 
     elif ext == ".pdf":
         docs = load_pdf(file_path)
-        return docs, analytics
+        return docs, analytics, raw_messages
 
     elif ext == ".csv":
         docs, analytics = load_csv(file_path)
-        return docs, analytics
+        return docs, analytics, raw_messages
 
     elif ext in (".xlsx", ".xls"):
         docs, analytics = load_excel(file_path)
-        return docs, analytics
+        return docs, analytics, raw_messages
 
     elif ext == ".docx":
         docs = load_docx(file_path)
-        return docs, analytics
+        return docs, analytics, raw_messages
 
     elif ext in (".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".tiff"):
         docs = load_image_ocr(file_path)
-        return docs, analytics
+        return docs, analytics, raw_messages
 
     else:
         raise ValueError(f"Unsupported file type: '{ext}'")
@@ -305,6 +308,10 @@ def analytics_to_text(analytics: Dict[str, Any], file_type: str = "structured") 
         for sheet_name, sheet_analytics in analytics["sheets"].items():
             lines.append(f"\n--- Sheet: {sheet_name} ---")
             lines.extend(_flat_analytics_lines(sheet_analytics))
+    elif analytics.get("type") == "document":
+        lines.append(f"Executive Summary: {analytics.get('summary', '')}")
+        lines.append(f"Key Topics: {', '.join(analytics.get('topics', []))}")
+        lines.append(f"Important Entities: {', '.join(analytics.get('entities', []))}")
     else:
         lines.extend(_flat_analytics_lines(analytics))
 
