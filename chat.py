@@ -56,7 +56,7 @@ MAX_RETRIEVED_CHARS = 3000    # total retrieved chunks text
 MAX_TOTAL_PROMPT_CHARS = 8000 # hard cap on full prompt before sending
 
 # ── System prompts ─────────────────────────────────────────────────────────────
-SYSTEM_PROMPT = """You are Xai, a friendly AI assistant.
+SYSTEM_PROMPT = """You are Xai, a friendly Xai Assistant.
 
 STRICT LANGUAGE DETECTION RULES (follow in this exact order):
 1. First detect the SCRIPT used in the user's last message:
@@ -68,7 +68,7 @@ STRICT LANGUAGE DETECTION RULES (follow in this exact order):
 4. NEVER randomly change languages mid-conversation.
 5. Keep replies friendly, natural, and concise (1-3 sentences)."""
 
-RAG_SYSTEM_PROMPT = """You are Xai, a helpful AI assistant specialized in analyzing documents and files.
+RAG_SYSTEM_PROMPT = """You are Xai, a helpful Xai Assistant specialized in analyzing documents and files.
 
 The user has uploaded one or more files. Answer questions based ONLY on the document content provided below.
 
@@ -548,3 +548,63 @@ def chat_llm(message: str, session_id: str) -> str:
         logger.error(f"All LLM attempts failed for session {session_id}: {str(e)}")
         # Re-raise so the HTTP layer returns a proper 502
         raise
+
+
+def generate_file_intelligence(docs: list, file_type: str, file_name: str) -> dict:
+    """Generates an intelligent summary for unstructured files using LLM."""
+    if not docs:
+        return {}
+        
+    # Combine first few chunks to get a representative sample (max 6000 chars)
+    sample_text = ""
+    for doc in docs:
+        if len(sample_text) > 6000:
+            break
+        sample_text += doc.page_content + "\n\n"
+        
+    prompt = f"""You are an expert File Intelligence Engine.
+Analyze the following text extracted from a '{file_type}' file named '{file_name}'.
+Generate a concise analytics payload with the following sections:
+1. Executive Summary (2-3 sentences)
+2. Key Topics (comma separated)
+3. Important Entities or Objects (comma separated)
+
+Return ONLY valid JSON in the exact format:
+{{
+  "summary": "...",
+  "topics": ["topic1", "topic2"],
+  "entities": ["entity1", "entity2"]
+}}
+
+Text to analyze:
+{sample_text[:6000]}
+"""
+    try:
+        reply = _call_llm(
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=300,
+            session_id="intelligence_gen",
+            purpose="file-intelligence"
+        )
+        import json
+        clean_reply = reply.strip()
+        if clean_reply.startswith("```json"):
+            clean_reply = clean_reply[7:-3].strip()
+        elif clean_reply.startswith("```"):
+            clean_reply = clean_reply[3:-3].strip()
+            
+        data = json.loads(clean_reply)
+        return {
+            "type": "document",
+            "summary": data.get("summary", "Summary generation failed."),
+            "topics": data.get("topics", []),
+            "entities": data.get("entities", [])
+        }
+    except Exception as e:
+        logger.error(f"Intelligence generation failed: {e}")
+        return {
+            "type": "document",
+            "summary": "Could not generate summary from document content.",
+            "topics": [],
+            "entities": []
+        }
