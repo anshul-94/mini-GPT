@@ -3,28 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>RAG AI Assistant — Upload & Ask</title>
+    <title>Xai Assistant</title>
     <meta name="description" content="Multi-Modal RAG AI Assistant. Upload PDFs, CSVs, Excel, WhatsApp chats, images and ask questions about them.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* ============================================================
-           DESIGN TOKENS  (unchanged from original)
+           DESIGN TOKENS
         ============================================================ */
         :root {
-            --bg-main: radial-gradient(circle at center, #1a2238 0%, #0b0f1a 60%, #05070f 100%);
-            --sidebar-bg: #020617;
-            --sidebar-hover: #0f172a;
+            --bg-main: #020817;
+            --sidebar-bg: #0F172A;
+            --sidebar-hover: #1E293B;
             --text-primary: #e5e7eb;
             --text-secondary: #9ca3af;
-            --accent: #22c55e;
+            --accent: #22C55E;
             --accent-hover: #16a34a;
-            --input-bg: #0f172a;
-            --input-border: #1f2937;
+            --input-bg: #0F172A;
+            --input-border: #1E293B;
             --input-focus: rgba(34, 197, 94, 0.2);
-            --bubble-user: #1e293b;
-            --bubble-bot: #111827;
-            --bubble-border: #1f2937;
+            --bubble-user: #1E293B;
+            --bubble-bot: #0F172A;
+            --bubble-border: #1E293B;
             --sidebar-width: 260px;
             --radius-md: 12px;
             --radius-lg: 14px;
@@ -89,15 +89,24 @@
 
         .app-name {
             font-size: 18px;
+            margin-bottom: 24px;
+            padding: 0 12px;
+        }
+        .brand-logo {
+            font-size: inherit;
             font-weight: 700;
-            padding: 12px;
-            margin-bottom: 12px;
             letter-spacing: -0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .brand-xai {
+            color: var(--accent);
+            text-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+            font-weight: 800;
+        }
+        .brand-assistant {
             color: var(--text-primary);
-            /* prevent long names from pushing layout */
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .new-chat-btn {
@@ -254,6 +263,42 @@
             color: var(--text-secondary);
             max-width: 400px;
             line-height: 1.5;
+        }
+
+        .welcome-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 32px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .welcome-card {
+            background-color: var(--sidebar-bg);
+            border: 1px solid var(--bubble-border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .welcome-card:hover {
+            background-color: var(--sidebar-hover);
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+
+        .welcome-card-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .welcome-card-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
         }
 
         /* ============================================================
@@ -836,26 +881,43 @@
         #analytics-panel.visible { display: block; }
 
         .analytics-card {
-            background: linear-gradient(135deg, rgba(34,197,94,0.06) 0%, rgba(15,23,42,0.8) 100%);
-            border: 1px solid rgba(34,197,94,0.2);
+            background-color: var(--sidebar-bg);
+            border: 1px solid var(--bubble-border);
             border-radius: var(--radius-lg);
             padding: 16px 20px;
             margin-bottom: 16px;
             animation: fadeIn 0.4s ease;
+        }
+        .analytics-card.collapsed .analytics-body {
+            display: none;
+        }
+        .analytics-card.collapsed .collapse-icon {
+            transform: rotate(-90deg);
         }
         .analytics-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .analytics-card.collapsed .analytics-header {
+            margin-bottom: 0;
+        }
+        .collapse-icon {
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            display: inline-block;
         }
         .analytics-title {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
-            color: var(--accent);
+            color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
         .analytics-close {
             background: none;
@@ -867,6 +929,7 @@
             padding: 2px 6px;
             border-radius: 4px;
             transition: var(--transition);
+            z-index: 2;
         }
         .analytics-close:hover { color: var(--text-primary); background: rgba(255,255,255,0.08); }
         .analytics-grid {
@@ -967,7 +1030,9 @@
     <div id="sidebar-overlay" aria-hidden="true"></div>
 
     <aside id="sidebar" role="navigation" aria-label="Chat sessions">
-        <div class="app-name">Assistant</div>
+        <div class="app-name">
+            <span class="brand-logo"><span class="brand-xai">Xai</span><span class="brand-assistant">Assistant</span></span>
+        </div>
         <button type="button" class="new-chat-btn" id="new-chat-btn">
             <svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
             New Chat
@@ -981,15 +1046,33 @@
             <button id="menu-toggle" class="menu-toggle" aria-label="Toggle Sidebar">
                 <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
-            <div class="header-title">AI Assistant</div>
+            <div class="header-title"><span class="brand-logo"><span class="brand-xai">Xai</span><span class="brand-assistant">Assistant</span></span></div>
             <button id="header-new-chat-btn" class="header-new-chat-btn" aria-label="New Chat">
                 <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
             </button>
         </header>
 
         <div id="welcome-screen">
-            <h1 class="welcome-title">What would you like to know?</h1>
-            <p class="welcome-sub">Ask anything, your AI assistant is ready.</p>
+            <h1 class="welcome-title">👋 Welcome</h1>
+            <p class="welcome-sub">Ask questions about your files.</p>
+            <div class="welcome-grid">
+                <div class="welcome-card" onclick="document.getElementById('file-input').click()">
+                    <div class="welcome-card-icon">📄</div>
+                    <div class="welcome-card-title">Upload PDF</div>
+                </div>
+                <div class="welcome-card" onclick="document.getElementById('file-input').click()">
+                    <div class="welcome-card-icon">📊</div>
+                    <div class="welcome-card-title">Upload CSV / Excel</div>
+                </div>
+                <div class="welcome-card" onclick="document.getElementById('file-input').click()">
+                    <div class="welcome-card-icon">🖼️</div>
+                    <div class="welcome-card-title">Upload Image</div>
+                </div>
+                <div class="welcome-card" onclick="document.getElementById('file-input').click()">
+                    <div class="welcome-card-icon">💬</div>
+                    <div class="welcome-card-title">Upload WhatsApp</div>
+                </div>
+            </div>
         </div>
 
         <div id="chat-container">
@@ -1150,7 +1233,7 @@
                 return;
             }
 
-            const sess = { id: uid(), title: 'New Chat', messages: [], isLoading: false };
+            const sess = { id: uid(), title: 'New Chat', messages: [], isLoading: false, uploadedFiles: [], analytics: [] };
             S.sessions.unshift(sess);
 
             // BUG 1 FIX: Set S.activeId atomically BEFORE activateSession so any
@@ -1191,7 +1274,36 @@
             // Dynamic header title update
             const headerTitle = document.querySelector('.header-title');
             if (headerTitle) {
-                headerTitle.textContent = sess.messages.length === 0 ? 'AI Assistant' : sess.title;
+                headerTitle.innerHTML = sess.messages.length === 0 ? '<span class="brand-logo"><span class="brand-xai">Xai</span><span class="brand-assistant">Assistant</span></span>' : sess.title;
+            }
+
+            // Re-render file badges
+            D.fileBadges.innerHTML = '';
+            if (sess.uploadedFiles.length > 0) {
+                sess.uploadedFiles.forEach(f => {
+                    const badge = document.createElement('div');
+                    badge.className = 'file-badge';
+                    badge.title = f;
+                    badge.innerHTML = `<span class="file-badge-icon">${getFileIcon(f)}</span><span class="file-badge-name">${f}</span>`;
+                    D.fileBadges.appendChild(badge);
+                });
+                D.fileBadges.classList.add('visible');
+                D.uploadBtn.classList.add('has-files');
+            } else {
+                D.fileBadges.classList.remove('visible');
+                D.uploadBtn.classList.remove('has-files');
+            }
+
+            // Re-render analytics
+            D.analyticsPanel.innerHTML = '';
+            if (sess.analytics.length > 0) {
+                sess.analytics.forEach(a => {
+                    const card = createAnalyticsCard(a.data, a.fileName, true);
+                    D.analyticsPanel.appendChild(card);
+                });
+                D.analyticsPanel.classList.add('visible');
+            } else {
+                D.analyticsPanel.classList.remove('visible');
             }
 
             D.typing.style.display = sess.isLoading ? 'block' : 'none';
@@ -1486,6 +1598,9 @@
 
         // Add a file badge to the strip
         function addFileBadge(filename) {
+            const existing = Array.from(D.fileBadges.children).find(b => b.title === filename);
+            if (existing) return;
+
             const badge = document.createElement('div');
             badge.className = 'file-badge';
             badge.title = filename;
@@ -1502,15 +1617,15 @@
             D.uploadBtn.classList.add('has-files');
         }
 
-        // Render analytics panel from API response
-        function renderAnalytics(analytics, fileName) {
+        // Create analytics card element from API response
+        function createAnalyticsCard(analytics, fileName, collapsed = false) {
             if (!analytics || Object.keys(analytics).length === 0) {
-                return;
+                return null;
             }
 
             const type = analytics.type;
             const card = document.createElement('div');
-            card.className = 'analytics-card';
+            card.className = `analytics-card ${collapsed ? 'collapsed' : ''}`;
             card.id = `analytics-${Date.now()}`;
 
             let headerIcon = '📊';
@@ -1518,13 +1633,17 @@
             if (type === 'whatsapp') { headerIcon = '💬'; headerTitle = 'WhatsApp Chat Analytics'; }
             else if (type === 'excel') { headerIcon = '📊'; headerTitle = 'Excel Analytics'; }
             else if (type === 'tabular') { headerIcon = '📊'; headerTitle = 'CSV Analytics'; }
+            else if (type === 'document') { headerIcon = '🧠'; headerTitle = 'File Intelligence'; }
 
             card.innerHTML = `
-                <div class="analytics-header">
+                <div class="analytics-header" onclick="this.parentElement.classList.toggle('collapsed')">
                     <div class="analytics-title">${headerIcon} ${headerTitle} — ${fileName}</div>
-                    <button class="analytics-close" onclick="this.closest('.analytics-card').remove()" title="Dismiss">×</button>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="collapse-icon">▼</span>
+                        <button class="analytics-close" onclick="event.stopPropagation(); this.closest('.analytics-card').remove()" title="Dismiss">×</button>
+                    </div>
                 </div>
-                <div class="analytics-body"></div>
+                <div class="analytics-body" style="margin-top: 12px;"></div>
             `;
 
             const body = card.querySelector('.analytics-body');
@@ -1596,17 +1715,28 @@
                         <tbody>${statsRows}</tbody>
                     </table>` : ''}
                 `;
+            } else if (type === 'document') {
+                const summary = analytics.summary || '';
+                const topics = analytics.topics || [];
+                const entities = analytics.entities || [];
+                body.innerHTML = `
+                    <div style="font-size:13px; line-height:1.5; color:var(--text-primary); margin-bottom:12px;">${summary}</div>
+                    ${topics.length ? `
+                    <div style="font-size:12px; color:var(--text-secondary); margin-bottom:6px;">Key Topics</div>
+                    <div class="analytics-chips" style="margin-bottom:12px;">
+                        ${topics.map(t => `<div class="analytics-chip">${t}</div>`).join('')}
+                    </div>` : ''}
+                    ${entities.length ? `
+                    <div style="font-size:12px; color:var(--text-secondary); margin-bottom:6px;">Important Entities</div>
+                    <div class="analytics-chips">
+                        ${entities.map(e => `<div class="analytics-chip">${e}</div>`).join('')}
+                    </div>` : ''}
+                `;
             } else {
                 body.innerHTML = `<div style="color:var(--text-secondary);font-size:13px;">File indexed. Ask your questions below.</div>`;
             }
 
-            D.analyticsPanel.appendChild(card);
-            D.analyticsPanel.classList.add('visible');
-
-            // Show chat container if welcome screen was showing
-            D.welcome.style.display = 'none';
-            D.chatContainer.style.display = 'block';
-            scrollBottom();
+            return card;
         }
 
         // Core upload function
@@ -1646,11 +1776,28 @@
                 }
 
                 // Show file badge
-                addFileBadge(file.name);
+                if (!sess.uploadedFiles.includes(file.name)) {
+                    sess.uploadedFiles.push(file.name);
+                    if (S.activeId === sess.id) {
+                        addFileBadge(file.name);
+                    }
+                }
 
                 // Show analytics panel
                 if (data.analytics) {
-                    renderAnalytics(data.analytics, file.name);
+                    sess.analytics.push({ data: data.analytics, fileName: file.name });
+                    if (S.activeId === sess.id) {
+                        const card = createAnalyticsCard(data.analytics, file.name);
+                        if (card) {
+                            D.analyticsPanel.appendChild(card);
+                            D.analyticsPanel.classList.add('visible');
+                            
+                            // Show chat container if welcome screen was showing
+                            D.welcome.style.display = 'none';
+                            D.chatContainer.style.display = 'block';
+                            scrollBottom();
+                        }
+                    }
                 }
 
                 // Show success message in chat
