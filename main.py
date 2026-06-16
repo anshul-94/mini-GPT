@@ -16,8 +16,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("chatbot.main")
 
 app = FastAPI(
-    title="Multi-Modal RAG AI Assistant",
-    description="Memory-driven chatbot with RAG support for PDF, CSV, Excel, DOCX, TXT, WhatsApp, and Image files.",
+    title="Xai Assistant",
+    description="Multi-Modal RAG AI Assistant. Upload PDFs, CSVs, Excel, WhatsApp chats, images and ask questions.",
     version="2.0.0"
 )
 
@@ -184,14 +184,19 @@ async def upload_file(
         from rag.loader import load_file, analytics_to_text
         from rag.whatsapp import analytics_to_text as wa_analytics_to_text
         from rag import retriever as rag_retriever
+        from chat import generate_file_intelligence
 
-        docs, analytics = load_file(file_path)
+        docs, analytics, raw_messages = load_file(file_path)
 
         if not docs:
             raise HTTPException(status_code=422, detail="Could not extract any text from the file.")
 
         # Determine file type and build analytics text for injection
         file_type_label = get_file_type_label(file_ext)
+
+        # Generate intelligence if no tabular/WhatsApp analytics exist
+        if not analytics and file_ext in [".pdf", ".docx", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".tiff"]:
+            analytics = generate_file_intelligence(docs, file_type_label, file.filename)
 
         # WhatsApp analytics use dedicated formatter
         if file_ext == ".txt" and "total_messages" in analytics:
@@ -209,7 +214,8 @@ async def upload_file(
             file_name=file.filename,
             file_type=file_type_label,
             analytics=analytics,
-            analytics_text=analytics_text
+            analytics_text=analytics_text,
+            raw_messages=raw_messages if raw_messages else None
         )
 
         upload_count[session_id] = total_uploads + 1
@@ -360,6 +366,13 @@ def _build_frontend_analytics(analytics: dict, file_ext: str) -> dict:
             sheet = first_sheet[0]
             result["columns"] = sheet.get("columns", [])
             result["numeric_stats"] = sheet.get("numeric_stats", {})
+
+    # Document intelligence
+    elif analytics.get("type") == "document":
+        result["type"] = "document"
+        result["summary"] = analytics.get("summary", "")
+        result["topics"] = analytics.get("topics", [])
+        result["entities"] = analytics.get("entities", [])
 
     return result
 
