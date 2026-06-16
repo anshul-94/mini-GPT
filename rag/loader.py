@@ -117,16 +117,26 @@ def load_text(file_path: str) -> List[Document]:
         raise
 
 
+_EASYOCR_READER = None
+
+def _get_easyocr_reader():
+    global _EASYOCR_READER
+    if _EASYOCR_READER is None:
+        import easyocr
+        # gpu=False for compatibility and no extra system packages like CUDA required
+        _EASYOCR_READER = easyocr.Reader(['en'], gpu=False)
+    return _EASYOCR_READER
+
+
 def load_image_ocr(file_path: str) -> List[Document]:
     """
-    Load image and extract text via Tesseract OCR.
-    Falls back to a description if tesseract is not installed.
+    Load image and extract text via EasyOCR.
+    Falls back to a description if easyocr is not installed.
     """
     try:
-        import pytesseract
-        from PIL import Image
-        img = Image.open(file_path)
-        text = pytesseract.image_to_string(img)
+        reader = _get_easyocr_reader()
+        result = reader.readtext(file_path, detail=0)
+        text = "\n".join(result)
 
         if not text.strip():
             text = f"[Image file: {os.path.basename(file_path)}] — No readable text was detected by OCR."
@@ -139,9 +149,9 @@ def load_image_ocr(file_path: str) -> List[Document]:
         )]
         return docs
     except ImportError:
-        logger.warning("pytesseract or Pillow not installed. Returning placeholder.")
+        logger.warning("easyocr not installed. Returning placeholder.")
         docs = [Document(
-            page_content=f"[Image: {os.path.basename(file_path)}] — OCR unavailable (install pytesseract and tesseract-ocr).",
+            page_content=f"[Image: {os.path.basename(file_path)}] — OCR unavailable (install easyocr).",
             metadata={"source": file_path, "file_type": "image", "ocr": False}
         )]
         return docs
